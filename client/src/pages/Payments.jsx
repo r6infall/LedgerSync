@@ -1,238 +1,163 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import Label from '../components/ui/Label';
-import Card from '../components/ui/Card';
 import StatusBadge from '../components/ui/StatusBadge';
-import Button from '../components/ui/Button';
+import Label from '../components/ui/Label';
+import Toast from '../components/ui/Toast';
 
-function PaymentModal({ invoice, onClose, onPaid }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const amount = invoice?.totalAmount || 0;
-  const itcUnlock = (invoice?.gstAmount || 0);
-  const fmt = (n) => `₹${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+export default function Payments() {
+  const [payments, setPayments] = useState([]);
+  const [pendingInvoices, setPendingInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null);
+  const [processingId, setProcessingId] = useState(null);
 
-  const initPayment = async () => {
-    setError(''); setLoading(true);
+  const fetchHistory = async () => {
     try {
-      const orderRes = await api.post('/payments/create-order', {
-        invoiceId: invoice._id,
-        amount
-      });
-      const { orderId, keyId, paymentId } = orderRes.data;
-
-      if (!window.Razorpay) {
-        // Load Razorpay script dynamically
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-          s.onload = resolve; s.onerror = reject;
-          document.head.appendChild(s);
-        });
-      }
-
-      const rzp = new window.Razorpay({
-        key: keyId,
-        amount: amount * 100,
-        currency: 'INR',
-        name: 'LedgerSync',
-        description: `ITC Unlock — Invoice ${invoice.invoiceNumber}`,
-        order_id: orderId,
-        handler: async (response) => {
-          try {
-            await api.post('/payments/verify', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              paymentId
-            });
-            onPaid();
-          } catch { setError('Payment verification failed'); }
-        },
-        theme: { color: '#1A1A1A' },
-        modal: { ondismiss: () => setLoading(false) }
-      });
-      rzp.open();
+      const res = await api.get('/payments/history');
+      setPayments(res.data.payments);
+      setPendingInvoices(res.data.pendingInvoices);
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not initiate payment');
+      console.error(err);
+    } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-          <div>
-            <div className="section-label" style={{ marginBottom: 4 }}>Pay & Unlock ITC</div>
-            <h2 style={{ fontSize: 15, fontWeight: 600 }}>{invoice?.invoiceNumber}</h2>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--text-muted)' }}>×</button>
-        </div>
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
-        {error && <div style={{ background: 'var(--red-bg)', border: '1px solid #F5C6C2', borderRadius: 5, padding: '8px 12px', marginBottom: 14, fontSize: 12, color: 'var(--red)' }}>{error}</div>}
+  const fmtAmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
-        <div style={{ background: 'var(--bg)', borderRadius: 6, padding: 16, marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Invoice Amount</span>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 600 }}>{fmt(amount)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 500 }}>ITC to Unlock</span>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 600, color: 'var(--green)' }}>{fmt(itcUnlock)}</span>
-          </div>
-        </div>
-
-        <div style={{ marginBottom: 16, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.7 }}>
-          Paying this invoice will unlock ₹{itcUnlock.toLocaleString('en-IN', { maximumFractionDigits: 2 })} as Input Tax Credit. Payment processed securely via Razorpay.
-        </div>
-
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="secondary" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>Cancel</Button>
-          <Button variant="primary" onClick={initPayment} disabled={loading} style={{ flex: 1, justifyContent: 'center' }}>
-            {loading ? <><span className="spinner" style={{ width: 12, height: 12 }} /> Processing…</> : `Pay ${fmt(amount)}`}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function Payments() {
-  const [payments, setPayments] = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [toast, setToast] = useState('');
-
-  const fetchData = async () => {
-    setLoading(true);
+  const handlePayNow = async (invoice) => {
+    setProcessingId(invoice._id);
     try {
-      const [payRes, invRes] = await Promise.all([
-        api.get('/payments'),
-        api.get('/invoices?status=mismatch&limit=10')
-      ]);
-      setPayments(payRes.data.payments || []);
-      setInvoices(invRes.data.invoices || []);
-    } catch { }
-    finally { setLoading(false); }
+      // 1. Create order
+      const createRes = await api.post('/payments/create', {
+        invoiceId: invoice._id,
+        amount: invoice.taxableAmount + invoice.gstAmount,
+        supplierGstin: invoice.sellerGstin
+      });
+
+      // Simulating Razorpay modal checkout delay in test mode
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // 2. Verify payment (Mocked successful callback from Razorpay)
+      const verifyRes = await api.post('/payments/verify', {
+        razorpayOrderId: createRes.data.orderId,
+        razorpayPaymentId: `pay_mock_${Date.now()}`,
+        invoiceId: invoice._id
+      });
+
+      setToast({ message: `Payment complete! ₹${verifyRes.data.itcUnlocked.toLocaleString('en-IN')} ITC unlocked.`, type: 'success' });
+      fetchHistory(); // Refresh tables
+
+    } catch (err) {
+      setToast({ message: 'Payment failed. Please try again.', type: 'error' });
+    } finally {
+      setProcessingId(null);
+    }
   };
 
-  useEffect(() => { fetchData(); }, []);
-
-  const handlePaid = () => {
-    setSelectedInvoice(null);
-    setToast('Payment verified! ITC unlocked successfully.');
-    setTimeout(() => setToast(''), 5000);
-    fetchData();
-  };
-
-  const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
-
-  const totalITCUnlocked = payments.filter(p => p.status === 'completed').reduce((s, p) => s + (p.itcUnlocked || 0), 0);
-  const totalPaid = payments.filter(p => p.status === 'completed').reduce((s, p) => s + (p.amount || 0), 0);
+  if (loading) {
+    return (
+      <div style={{ padding: 24, background: '#FAFAF8', minHeight: 'calc(100vh - 60px)' }}>
+        <div className="spinner" />
+      </div>
+    );
+  }
 
   return (
-    <div className="fade-in">
-      {toast && (
-        <div style={{
-          position: 'fixed', top: 20, right: 20, zIndex: 200,
-          background: 'var(--green-bg)', border: '1px solid #B8D9C4',
-          borderRadius: 6, padding: '10px 16px', fontSize: 12, color: 'var(--green)',
-          animation: 'fadeIn 0.2s ease'
-        }}>{toast}</div>
-      )}
+    <div className="fade-in" style={{ padding: 24, background: '#FAFAF8', minHeight: 'calc(100vh - 60px)' }}>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {selectedInvoice && <PaymentModal invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} onPaid={handlePaid} />}
-
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <div className="section-label" style={{ marginBottom: 4 }}>Payments</div>
-        <h1 style={{ fontSize: 20, fontWeight: 600 }}>ITC Unlock Payments</h1>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-          Pay suppliers to unlock Input Tax Credit on matched invoices
-        </p>
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1A1A1A', marginBottom: 4 }}>Payments</h1>
+        <div style={{ fontSize: 12, color: '#999' }}>Pay suppliers to unlock blocked ITC</div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
-        <Card>
-          <div className="stat-value" style={{ color: 'var(--green)' }}>{fmt(totalITCUnlocked)}</div>
-          <div className="stat-label">ITC Unlocked</div>
-        </Card>
-        <Card>
-          <div className="stat-value">{fmt(totalPaid)}</div>
-          <div className="stat-label">Total Paid</div>
-        </Card>
-        <Card>
-          <div className="stat-value">{payments.filter(p => p.status === 'completed').length}</div>
-          <div className="stat-label">Payments Complete</div>
-        </Card>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-        {/* Pending payments (mismatched invoices) */}
-        <div>
-          <Label>Invoices Requiring Payment</Label>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 32 }}><span className="spinner" /></div>
-          ) : invoices.length === 0 ? (
-            <div className="card empty-state">No invoices requiring payment</div>
-          ) : invoices.map(inv => (
-            <Card key={inv._id} style={{ marginBottom: 8, cursor: 'pointer' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <div>
-                  <div className="mono" style={{ marginBottom: 3 }}>{inv.invoiceNumber}</div>
-                  <div className="mono" style={{ fontSize: 9 }}>{inv.sellerGstin}</div>
-                </div>
-                <StatusBadge status={inv.status} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 600 }}>{fmt(inv.totalAmount)}</div>
-                  <div style={{ fontSize: 10, color: 'var(--green)' }}>ITC: {fmt(inv.gstAmount)}</div>
-                </div>
-                <Button id={`pay-btn-${inv._id}`} variant="primary" size="sm" onClick={() => setSelectedInvoice(inv)}>
-                  Pay & Unlock
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* Payment history */}
-        <div>
-          <Label>Payment History</Label>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 32 }}><span className="spinner" /></div>
-          ) : payments.length === 0 ? (
-            <div className="card empty-state">No payment history yet</div>
-          ) : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Invoice</th>
-                    <th>Amount</th>
-                    <th>ITC</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.map(p => (
-                    <tr key={p._id}>
-                      <td><span className="mono">{p.invoiceId?.invoiceNumber || '—'}</span></td>
-                      <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{fmt(p.amount)}</td>
-                      <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'var(--green)' }}>{fmt(p.itcUnlocked)}</td>
-                      <td><StatusBadge status={p.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+      <div style={{ background: '#FEF6E7', border: '1px solid #E8D5A8', borderRadius: 6, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 10 }}>
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#B8935A', marginTop: 5, flexShrink: 0 }} />
+        <div style={{ fontSize: 11, color: '#8A6A30', lineHeight: 1.6 }}>
+          Paying a supplier directly unlocks the ITC associated with their invoice. The tax credit reflects in your compliance score immediately.
         </div>
       </div>
+
+      <Label style={{ fontSize: 9, textTransform: 'uppercase', color: '#999', letterSpacing: '0.8px' }}>Invoices pending payment</Label>
+      <div className="table-container" style={{ marginBottom: 24 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th>Supplier GSTIN</th>
+              <th>Invoice No</th>
+              <th>Amount Due</th>
+              <th>GST Amount</th>
+              <th>ITC to Unlock</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pendingInvoices.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#999', fontSize: 11 }}>No pending invoices found</td></tr>
+            ) : pendingInvoices.map(inv => (
+              <tr key={inv._id}>
+                <td><span className="mono">{inv.sellerGstin}</span></td>
+                <td><span className="mono">{inv.invoiceNumber}</span></td>
+                <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500 }}>{fmtAmt(inv.taxableAmount + inv.gstAmount)}</td>
+                <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500 }}>{fmtAmt(inv.gstAmount)}</td>
+                <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#2D7D4E', fontWeight: 600 }}>{fmtAmt(inv.gstAmount)}</td>
+                <td>
+                  <button 
+                    onClick={() => handlePayNow(inv)}
+                    disabled={processingId === inv._id}
+                    style={{
+                      background: '#EAF5EE', color: '#2D7D4E', border: '1px solid #B8D4BC',
+                      borderRadius: 5, padding: '5px 12px', fontSize: 11, fontWeight: 500,
+                      cursor: processingId === inv._id ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s', opacity: processingId === inv._id ? 0.6 : 1
+                    }}
+                    onMouseOver={e => { if(processingId !== inv._id) { e.currentTarget.style.background = '#2D7D4E'; e.currentTarget.style.color = 'white'; } }}
+                    onMouseOut={e => { if(processingId !== inv._id) { e.currentTarget.style.background = '#EAF5EE'; e.currentTarget.style.color = '#2D7D4E'; } }}
+                  >
+                    {processingId === inv._id ? 'Processing...' : 'Pay Now'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <Label style={{ fontSize: 9, textTransform: 'uppercase', color: '#999', letterSpacing: '0.8px', marginTop: 24 }}>Payment history</Label>
+      <div className="table-container">
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Supplier GSTIN</th>
+              <th>Amount Paid</th>
+              <th>ITC Unlocked</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payments.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#999', fontSize: 11 }}>No payments found</td></tr>
+            ) : payments.map(pay => (
+              <tr key={pay._id}>
+                <td><span className="mono">{pay.invoiceId?.invoiceNumber || 'Unknown'}</span></td>
+                <td><span className="mono">{pay.invoiceId?.sellerGstin || 'Unknown'}</span></td>
+                <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500 }}>{fmtAmt(pay.amount)}</td>
+                <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500, color: '#2D7D4E' }}>{fmtAmt(pay.itcUnlocked)}</td>
+                <td style={{ fontSize: 11, color: '#999' }}>{new Date(pay.createdAt).toLocaleDateString('en-IN')}</td>
+                <td><StatusBadge status={pay.status} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
     </div>
   );
 }

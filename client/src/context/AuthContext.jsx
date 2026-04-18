@@ -38,7 +38,16 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    try {
+      const res = await api.get('/auth/me');
+      setUser(res.data.user);
+    } catch (err) {
+      console.error(err);
+      // If the backend doesn't have the user, we throw so they don't get stuck in a bad state
+      throw new Error('User not found in database. Please contact support or register again.');
+    }
+    return result;
   };
 
   const loginWithGoogle = async () => {

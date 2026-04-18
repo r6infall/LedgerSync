@@ -32,6 +32,9 @@ app.use('/api/payments', require('./routes/payments'));
 app.use('/api/compliance', require('./routes/compliance'));
 app.use('/api/ai', require('./routes/ai'));
 
+// Cron Jobs
+require('./cron/notifications');
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 

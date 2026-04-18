@@ -72,7 +72,7 @@ router.post('/chat', auth, async (req, res) => {
     const contextText = JSON.stringify(context, null, 2);
 
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       systemInstruction: `You are a GST compliance advisor for an Indian small business owner. You have access to their real data below. Answer in simple, plain language — avoid all jargon. Be specific and actionable. Always mention rupee amounts where relevant. Keep responses under 4 sentences. User data: ${contextText}`
     });
 
@@ -97,7 +97,7 @@ router.get('/insights', auth, async (req, res) => {
     const context = await getUserContext(req.user._id, req.user.businessName);
     const contextText = JSON.stringify(context, null, 2);
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
     const prompt = `Given this GST compliance data: ${contextText}, generate exactly 3 short insights (one sentence each) the business owner should know right now. Return only a valid JSON array of 3 strings, no explanation, no markdown.`;
 
     const result = await model.generateContent(prompt);
