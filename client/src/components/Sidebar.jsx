@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/dashboard',      icon: '◈', label: 'Dashboard' },
-  { to: '/invoices',       icon: '◧', label: 'Invoices' },
+  { to: '/upload',         icon: '◧', label: 'Upload Invoices' },
   { to: '/reconciliation', icon: '⇄', label: 'Reconciliation' },
   { to: '/ai-insights',    icon: '✦', label: 'AI Insights' },
   { to: '/payments',       icon: '◎', label: 'Payments' },

@@ -150,6 +150,19 @@ export default function Invoices() {
     fetchInvoices();
   };
 
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this invoice?')) return;
+    try {
+      await api.delete(`/invoices/${id}`);
+      setToast('Invoice deleted');
+      setTimeout(() => setToast(''), 3000);
+      fetchInvoices();
+    } catch (err) {
+      alert('Failed to delete invoice');
+    }
+  };
+
   const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
   return (
@@ -206,6 +219,7 @@ export default function Invoices() {
       </div>
 
       {/* Table */}
+      <div className="table-scroll-hint">Scroll horizontally to view more →</div>
       <div className="table-container">
         <table>
           <thead>
@@ -219,6 +233,7 @@ export default function Invoices() {
               <th>Total</th>
               <th>Source</th>
               <th>Status</th>
+              <th style={{ width: 40 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -237,6 +252,13 @@ export default function Invoices() {
                 <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500 }}>{fmt(inv.totalAmount)}</td>
                 <td><span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{inv.source}</span></td>
                 <td><StatusBadge status={inv.status} /></td>
+                <td>
+                  <button 
+                    onClick={(e) => handleDelete(inv._id, e)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-faint)', fontSize: 14 }}
+                    title="Delete invoice"
+                  >×</button>
+                </td>
               </tr>
             ))}
           </tbody>

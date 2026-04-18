@@ -89,7 +89,7 @@ export default function Dashboard() {
 
       {/* Quick stats */}
       <Label>Quick Stats</Label>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+      <div className="stat-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {stats.map((s, i) => (
           <Card key={i}>
             <div className="stat-value" style={{ color: s.color || 'var(--text-primary)' }}>{s.value}</div>
@@ -98,7 +98,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
+      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
         {/* Compliance Score */}
         <Card>
           <Label>Compliance Score</Label>
@@ -153,7 +153,7 @@ export default function Dashboard() {
 
       {/* Actions */}
       <Label>Quick Actions</Label>
-      <div style={{ display: 'flex', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <Button variant="primary" onClick={() => navigate('/invoices')}>
           ◧ Upload Invoices
         </Button>

@@ -82,7 +82,7 @@ export default function AIInsights() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 20 }}>
+      <div className="ai-insights-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 20 }}>
         {/* Main content */}
         <div>
           {/* Ask a question */}

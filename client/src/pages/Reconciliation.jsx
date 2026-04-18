@@ -152,7 +152,7 @@ export default function Reconciliation() {
       {summary && (
         <>
           <Label>Summary</Label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+          <div className="stat-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
             {[
               { label: 'Total Invoices', value: summary.totalInvoices || 0, color: 'var(--text-primary)' },
               { label: 'Matched',        value: summary.matchCounts?.matched || 0,  color: 'var(--green)' },
@@ -183,6 +183,7 @@ export default function Reconciliation() {
       </div>
 
       {/* Table */}
+      <div className="table-scroll-hint">Scroll horizontally to view more →</div>
       <div className="table-container">
         <table>
           <thead>

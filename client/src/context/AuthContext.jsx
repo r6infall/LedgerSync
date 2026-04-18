@@ -3,12 +3,15 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut as firebaseSignOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { auth } from '../firebase';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
+const googleProvider = new GoogleAuthProvider();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -38,11 +41,25 @@ export function AuthProvider({ children }) {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
+  const loginWithGoogle = async () => {
+    const result = await signInWithPopup(auth, googleProvider);
+    const token = await result.user.getIdToken();
+    
+    // Sync with backend (creates user if they don't exist)
+    const res = await api.post('/auth/sync', {
+      name: result.user.displayName,
+      email: result.user.email
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    setUser(res.data.user);
+    return res.data;
+  };
+
   const register = async (data) => {
     const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
     
-    // After successful Firebase registration, sync user details with our backend
-    // Wait for the token to be available
     const token = await userCredential.user.getIdToken();
     
     const res = await api.post('/auth/sync', {
@@ -51,9 +68,7 @@ export function AuthProvider({ children }) {
       gstin: data.gstin,
       email: data.email
     }, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      headers: { Authorization: `Bearer ${token}` }
     });
 
     setUser(res.data.user);
@@ -66,7 +81,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

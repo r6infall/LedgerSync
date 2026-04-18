@@ -23,6 +23,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ledgersyn
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/invoices', require('./routes/invoices'));
+app.use('/api/gstr2a', require('./routes/gstr2a'));
 app.use('/api/reconciliation', require('./routes/reconciliation'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/payments', require('./routes/payments'));

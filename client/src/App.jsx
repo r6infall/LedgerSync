@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Upload from './pages/Upload';
 import Invoices from './pages/Invoices';
 import Reconciliation from './pages/Reconciliation';
 import AIInsights from './pages/AIInsights';
@@ -22,6 +23,7 @@ export default function App() {
           {/* Protected routes (inside Layout) */}
           <Route element={<Layout />}>
             <Route path="/dashboard"      element={<Dashboard />} />
+            <Route path="/upload"         element={<Upload />} />
             <Route path="/invoices"       element={<Invoices />} />
             <Route path="/reconciliation" element={<Reconciliation />} />
             <Route path="/ai-insights"    element={<AIInsights />} />
