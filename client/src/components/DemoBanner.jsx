@@ -21,7 +21,7 @@ export default function DemoBanner() {
       alignItems: 'center',
     }}>
       <span style={{ fontSize: 11, color: '#8A6A30' }}>
-        <strong>Demo Mode</strong> — Ravi Textiles · demo@taxsync.ai · Password: Demo@1234
+        <strong>Demo Mode</strong> — Ravi Textiles · All data shown is Mock Data for demonstration purposes.
       </span>
       <button
         onClick={() => setDismissed(true)}

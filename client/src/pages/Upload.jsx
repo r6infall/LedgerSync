@@ -181,9 +181,9 @@ function FetchCard({ title, subtitle, onFetchSuccess }) {
           disabled={loading}
           style={{ width: '100%', marginBottom: 8, justifyContent: 'center' }}
         >
-          {loading ? 'Fetching from GST Portal...' : 'Fetch from Portal'}
+          {loading ? 'Fetching Mock Data...' : 'Fetch from Portal (Mock Data)'}
         </Button>
-        <div style={{ fontSize: 10, color: '#BBBBBB' }}>Connects to live GST Portal API in production</div>
+        <div style={{ fontSize: 10, color: '#BBBBBB' }}>Fetches 20 mock invoices for demo (Connects to live GST Portal API in production)</div>
       </div>
 
       <ValidationSummary result={result} />
@@ -230,13 +230,13 @@ export default function Upload() {
       <div className="upload-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <UploadCard 
           title="Purchase Register" 
-          subtitle="Your accounting books data" 
+          subtitle="Your accounting books data (Use sample_purchase.csv for Demo)" 
           source="purchase"
           onUploadSuccess={() => setPurchaseUploaded(true)}
         />
         <FetchCard 
           title="GSTR-2A/2B" 
-          subtitle="Government portal data" 
+          subtitle="Government portal data (Fetches Mock Data for Demo)" 
           onFetchSuccess={() => setGstr2aUploaded(true)}
         />
       </div>
