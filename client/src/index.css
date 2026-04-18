@@ -35,6 +35,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: none; }
+
+button { font-family: inherit; }
+
 /* ─── Typography ───────────────────────────────────────── */
 .mono {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
@@ -285,6 +290,29 @@ body {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── Shimmer skeleton loaders ─────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #F0EDE8 25%, #E8E5E0 50%, #F0EDE8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text   { height: 12px; border-radius: 3px; }
+.skeleton-title  { height: 20px; border-radius: 3px; }
+.skeleton-circle { border-radius: 50%; }
+.skeleton-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+}
 
 /* ─── Animations ───────────────────────────────────────── */
 @keyframes fadeIn {

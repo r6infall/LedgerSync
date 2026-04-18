@@ -3,8 +3,8 @@ const Invoice = require('../models/Invoice');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 
-// Temporarily set to run every minute for testing as requested
-cron.schedule('* * * * *', async () => {
+// Run at 9am daily (no longer testing every minute to preserve API quota)
+cron.schedule('0 9 * * *', async () => {
   console.log('Running notification cron job...');
   try {
     const users = await User.find();

@@ -35,9 +35,8 @@ export default function AIInsights() {
   const [score, setScore] = useState(null);
 
   useEffect(() => {
-    api.get('/compliance/score').then(r => setScore(r.data.score)).catch(() => {});
-    // Auto-load on mount
-    loadInsights('Provide a general GST compliance health check.');
+    api.get('/compliance/score').then(r => setScore(r.data)).catch(() => {});
+    // Don't auto-load AI on mount to preserve API quota
   }, []);
 
   const loadInsights = async (q) => {

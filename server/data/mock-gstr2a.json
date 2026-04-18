@@ -1,411 +1,182 @@
-{
-  "gstin": "27BBBBBBBBBBBBZ",
-  "fp": "102024",
-  "b2b": [
-    {
-      "ctin": "29AABCT3518Q1ZV",
-      "inv": [
-        {
-          "inum": "INV-2024-1000",
-          "idt": "16-10-2024",
-          "val": 6034.52,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 5114,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 460.26,
-                "sgst": 460.26
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1001",
-          "idt": "13-10-2024",
-          "val": 26992.5,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 22875,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 2058.75,
-                "sgst": 2058.75
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1002",
-          "idt": "20-10-2024",
-          "val": 1482.08,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 1256,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 113.03999999999999,
-                "sgst": 113.03999999999999
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1003",
-          "idt": "11-10-2024",
-          "val": 58126.8,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 49260,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 4433.4,
-                "sgst": 4433.4
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ctin": "27AAPFU0939F1ZV",
-      "inv": [
-        {
-          "inum": "INV-2024-1004",
-          "idt": "26-10-2024",
-          "val": 1744.04,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 1478,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 133.01999999999998,
-                "sgst": 133.01999999999998
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1005",
-          "idt": "08-10-2024",
-          "val": 58732.14,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 49773,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 4479.57,
-                "sgst": 4479.57
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1006",
-          "idt": "08-10-2024",
-          "val": 57913.22,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 49079,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 4417.11,
-                "sgst": 4417.11
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1007",
-          "idt": "09-10-2024",
-          "val": 54907.759999999995,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 46532,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 4187.88,
-                "sgst": 4187.88
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ctin": "07BBNPP1234K2Z1",
-      "inv": [
-        {
-          "inum": "INV-2024-1008",
-          "idt": "25-10-2024",
-          "val": 1641.38,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 1391,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 125.19,
-                "sgst": 125.19
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1009",
-          "idt": "10-10-2024",
-          "val": 16279.279999999999,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 13796,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 1241.6399999999999,
-                "sgst": 1241.6399999999999
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1010",
-          "idt": "22-10-2024",
-          "val": 26630.239999999998,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 22568,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 2031.12,
-                "sgst": 2031.12
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1011",
-          "idt": "23-10-2024",
-          "val": 16435.04,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 13928,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 1253.52,
-                "sgst": 1253.52
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ctin": "33CDDSF5678L1Z9",
-      "inv": [
-        {
-          "inum": "INV-2024-1012",
-          "idt": "15-10-2024",
-          "val": 57299.619999999995,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 48559,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 4370.3099999999995,
-                "sgst": 4370.3099999999995
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1013",
-          "idt": "06-10-2024",
-          "val": 1484.44,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 1258,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 113.22,
-                "sgst": 113.22
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1014",
-          "idt": "22-10-2024",
-          "val": 52644.520000000004,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 44614,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 4015.2599999999998,
-                "sgst": 4015.2599999999998
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1015",
-          "idt": "18-10-2024",
-          "val": 45806.42,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 38819,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 3493.71,
-                "sgst": 3493.71
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ctin": "09EEWWD9012M1Z8",
-      "inv": [
-        {
-          "inum": "INV-2024-1016",
-          "idt": "12-10-2024",
-          "val": 38242.619999999995,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 32409,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 2916.81,
-                "sgst": 2916.81
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1017",
-          "idt": "08-10-2024",
-          "val": 17028.58,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 14431,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 1298.79,
-                "sgst": 1298.79
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1018",
-          "idt": "03-10-2024",
-          "val": 37221.92,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 31544,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 2838.96,
-                "sgst": 2838.96
-              }
-            }
-          ]
-        },
-        {
-          "inum": "INV-2024-1019",
-          "idt": "26-10-2024",
-          "val": 32816.979999999996,
-          "pos": "27",
-          "rchrg": "N",
-          "itms": [
-            {
-              "num": 1,
-              "itm_det": {
-                "txval": 27811,
-                "rt": 18,
-                "igst": 0,
-                "cgst": 2502.99,
-                "sgst": 2502.99
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "ctin": "29AABCT1332L1ZT",
+    "inum": "TXT/2024/001",
+    "idt": "05-04-2024",
+    "val": 59000,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 18, "txval": 50000, "iamt": 0, "camt": 4500, "samt": 4500, "csamt": 0 } }]
+  },
+  {
+    "ctin": "29AABCT1332L1ZT",
+    "inum": "TXT/2024/002",
+    "idt": "08-04-2024",
+    "val": 35400,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 18, "txval": 30000, "iamt": 0, "camt": 2700, "samt": 2700, "csamt": 0 } }]
+  },
+  {
+    "ctin": "29AABCT1332L1ZT",
+    "inum": "TXT/2024/003",
+    "idt": "12-04-2024",
+    "val": 23600,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 18, "txval": 20000, "iamt": 0, "camt": 1800, "samt": 1800, "csamt": 0 } }]
+  },
+  {
+    "ctin": "06AABCE3803M1ZH",
+    "inum": "FAB/APR/101",
+    "idt": "03-04-2024",
+    "val": 47200,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 12, "txval": 42143, "iamt": 0, "camt": 2529, "samt": 2529, "csamt": 0 } }]
+  },
+  {
+    "ctin": "06AABCE3803M1ZH",
+    "inum": "FAB/APR/102",
+    "idt": "09-04-2024",
+    "val": 28320,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 12, "txval": 25286, "iamt": 0, "camt": 1517, "samt": 1517, "csamt": 0 } }]
+  },
+  {
+    "ctin": "06AABCE3803M1ZH",
+    "inum": "FAB/APR/103",
+    "idt": "15-04-2024",
+    "val": 63720,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 12, "txval": 56893, "iamt": 0, "camt": 3414, "samt": 3414, "csamt": 0 } }]
+  },
+  {
+    "ctin": "27AAACI3829P1ZS",
+    "inum": "IND/2024/0441",
+    "idt": "06-04-2024",
+    "val": 18880,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 5, "txval": 17981, "iamt": 0, "camt": 449, "samt": 449, "csamt": 0 } }]
+  },
+  {
+    "ctin": "27AAACI3829P1ZS",
+    "inum": "IND/2024/0442",
+    "idt": "11-04-2024",
+    "val": 12980,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 5, "txval": 12362, "iamt": 0, "camt": 309, "samt": 309, "csamt": 0 } }]
+  },
+  {
+    "ctin": "27AAACI3829P1ZS",
+    "inum": "IND/2024/0443",
+    "idt": "18-04-2024",
+    "val": 31500,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 5, "txval": 30000, "iamt": 0, "camt": 750, "samt": 750, "csamt": 0 } }]
+  },
+  {
+    "ctin": "33AABCM4751A1ZD",
+    "inum": "MUM-INV-2024-0081",
+    "idt": "04-04-2024",
+    "val": 82600,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 28, "txval": 64531, "iamt": 0, "camt": 9034, "samt": 9034, "csamt": 0 } }]
+  },
+  {
+    "ctin": "33AABCM4751A1ZD",
+    "inum": "MUM-INV-2024-0082",
+    "idt": "10-04-2024",
+    "val": 51040,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 28, "txval": 39875, "iamt": 0, "camt": 5583, "samt": 5583, "csamt": 0 } }]
+  },
+  {
+    "ctin": "36AABCP3981L1ZK",
+    "inum": "HYD/04/2024/223",
+    "idt": "07-04-2024",
+    "val": 25780,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 18, "txval": 21847, "iamt": 0, "camt": 1966, "samt": 1966, "csamt": 0 } }]
+  },
+  {
+    "ctin": "29AABCT1332L1ZT",
+    "inum": "TXT/2024/004",
+    "idt": "20-04-2024",
+    "val": 45000,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 18, "txval": 38136, "iamt": 0, "camt": 3432, "samt": 3432, "csamt": 0 } }]
+  },
+  {
+    "ctin": "06AABCE3803M1ZH",
+    "inum": "FAB/APR/104",
+    "idt": "22-04-2024",
+    "val": 52000,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 12, "txval": 46429, "iamt": 0, "camt": 2786, "samt": 2786, "csamt": 0 } }]
+  },
+  {
+    "ctin": "27AAACI3829P1ZS",
+    "inum": "IND/2024/0444",
+    "idt": "25-04-2024",
+    "val": 16800,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 5, "txval": 16000, "iamt": 0, "camt": 400, "samt": 400, "csamt": 0 } }]
+  },
+  {
+    "ctin": "33AABCM4751A1ZD",
+    "inum": "MUM-INV-2024-0083",
+    "idt": "28-04-2024",
+    "val": 70500,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 28, "txval": 55078, "iamt": 0, "camt": 7711, "samt": 7711, "csamt": 0 } }]
+  },
+  {
+    "ctin": "07AABCK8291P1ZV",
+    "inum": "DEL/EXP/24/0091",
+    "idt": "02-04-2024",
+    "val": 38600,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 18, "txval": 32712, "iamt": 0, "camt": 2944, "samt": 2944, "csamt": 0 } }]
+  },
+  {
+    "ctin": "07AABCK8291P1ZV",
+    "inum": "DEL/EXP/24/0092",
+    "idt": "14-04-2024",
+    "val": 27900,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 18, "txval": 23644, "iamt": 0, "camt": 2128, "samt": 2128, "csamt": 0 } }]
+  },
+  {
+    "ctin": "19AAACU9831L1ZM",
+    "inum": "CAL/B2B/2024/331",
+    "idt": "16-04-2024",
+    "val": 91200,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 12, "txval": 81429, "iamt": 0, "camt": 4886, "samt": 4886, "csamt": 0 } }]
+  },
+  {
+    "ctin": "19AAACU9831L1ZM",
+    "inum": "CAL/B2B/2024/332",
+    "idt": "23-04-2024",
+    "val": 44300,
+    "pos": "27",
+    "rev": "N",
+    "itms": [{ "num": 1, "itm_det": { "rt": 12, "txval": 39554, "iamt": 0, "camt": 2373, "samt": 2373, "csamt": 0 } }]
+  }
+]

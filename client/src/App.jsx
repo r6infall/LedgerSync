@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -19,6 +20,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
+          <Route path="/"         element={<Landing />} />
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
 
@@ -36,8 +38,7 @@ export default function App() {
           </Route>
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/"  element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
