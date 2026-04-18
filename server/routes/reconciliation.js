@@ -10,14 +10,22 @@ const reconciliationService = require('../services/reconciliationService');
 router.post('/run', auth, async (req, res) => {
   try {
     const results = await reconciliationService.runReconciliation(req.user._id);
+    res.json({ message: 'Reconciliation complete', summary: results, ...results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    await Notification.create({
-      userId: req.user._id,
-      message: `Reconciliation complete: ${results.matched} matched, ${results.mismatches} mismatches, ${results.missing} missing`,
-      type: results.mismatches > 0 ? 'warning' : 'success'
+// POST /api/reconcile — Exact requirement route
+router.post('/', auth, async (req, res) => {
+  try {
+    const results = await reconciliationService.runReconciliation(req.user._id);
+    res.json({
+      matched: results.matched,
+      mismatches: results.mismatches,
+      missing: results.missing,
+      totalProcessed: results.totalProcessed
     });
-
-    res.json({ message: 'Reconciliation complete', summary: results });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -28,21 +36,25 @@ router.get('/results', auth, async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
 
-    // Get user's invoice IDs
     const userInvoices = await Invoice.find({ uploadedBy: req.user._id }).select('_id');
     const invoiceIds = userInvoices.map(i => i._id);
 
     const query = { invoiceId: { $in: invoiceIds } };
     if (status) query.matchStatus = status;
 
-    const total = await ReconciliationResult.countDocuments(query);
-    const results = await ReconciliationResult.find(query)
-      .populate('invoiceId')
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+    let resultsQuery = ReconciliationResult.find(query).populate('invoiceId').sort({ createdAt: -1 });
+    
+    if (limit !== 'all') {
+      resultsQuery = resultsQuery.skip((Number(page) - 1) * Number(limit)).limit(Number(limit));
+    }
 
-    res.json({ results, total, page: Number(page), pages: Math.ceil(total / limit) });
+    const results = await resultsQuery;
+    const total = await ReconciliationResult.countDocuments(query);
+
+    if (limit === 'all') {
+      return res.json({ results, total });
+    }
+    res.json({ results, total, page: Number(page), pages: Math.ceil(total / Number(limit)) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

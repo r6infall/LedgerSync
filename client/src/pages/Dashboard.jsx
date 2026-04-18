@@ -1,169 +1,214 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import Card from '../components/ui/Card';
 import Label from '../components/ui/Label';
 import StatusBadge from '../components/ui/StatusBadge';
 import Bar from '../components/ui/Bar';
 import NotificationRow from '../components/ui/NotificationRow';
-import Button from '../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 
-function ScoreRing({ score, riskLevel }) {
-  const r = 46;
-  const circumference = 2 * Math.PI * r;
-  const dash = (score / 100) * circumference;
-  const color = riskLevel === 'low' ? '#2D7D4E' : riskLevel === 'high' ? '#C0392B' : '#B8935A';
-
-  return (
-    <div className="score-ring-wrap" style={{ width: 120, height: 120 }}>
-      <svg width="120" height="120" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r={r} fill="none" stroke="#F0EDE8" strokeWidth="6" />
-        <circle
-          cx="60" cy="60" r={r} fill="none"
-          stroke={color} strokeWidth="6"
-          strokeDasharray={`${dash} ${circumference}`}
-          strokeLinecap="round"
-          transform="rotate(-90 60 60)"
-          style={{ transition: 'stroke-dasharray 0.8s ease' }}
-        />
-      </svg>
-      <div style={{ position: 'absolute', textAlign: 'center' }}>
-        <div style={{ fontSize: 22, fontWeight: 600, lineHeight: 1 }}>{score}</div>
-        <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>/ 100</div>
-      </div>
-    </div>
-  );
-}
-
 export default function Dashboard() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [score, setScore] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [notifications, setNotifications] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [filter, setFilter] = useState('All');
+
+  const fetchData = async () => {
+    try {
+      const res = await api.get('/dashboard/kpis');
+      setData(res.data);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error('Failed to fetch dashboard KPIs', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    Promise.all([
-      api.get('/compliance/score').catch(() => ({ data: { score: null } })),
-      api.get('/reconciliation/summary').catch(() => ({ data: {} })),
-      api.get('/notifications').catch(() => ({ data: { notifications: [] } })),
-    ]).then(([scoreRes, summaryRes, notifRes]) => {
-      setScore(scoreRes.data.score);
-      setSummary(summaryRes.data);
-      setNotifications(notifRes.data.notifications?.slice(0, 6) || []);
-    }).finally(() => setLoading(false));
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  const itcAvail = score?.itcAvailable || 0;
-  const itcClaimed = score?.itcClaimed || 0;
-  const itcAtRisk = score?.itcAtRisk || 0;
-  const itcTotal = itcAvail + itcAtRisk || 1;
+  const fmtAmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
-  const stats = [
-    { label: 'Total Invoices',   value: summary?.totalInvoices || 0 },
-    { label: 'Matched',          value: summary?.matchCounts?.matched || 0,   color: 'var(--green)' },
-    { label: 'Mismatches',       value: summary?.matchCounts?.mismatch || 0,  color: 'var(--red)' },
-    { label: 'Missing',          value: summary?.matchCounts?.missing || 0,   color: 'var(--amber)' },
-  ];
+  if (loading) {
+    return (
+      <div style={{ padding: 24, background: '#FAFAF8', minHeight: '100vh' }}>
+        <div style={{ height: 24, width: 150, background: '#F0EDE8', borderRadius: 4, marginBottom: 8, animation: 'pulse 1.5s infinite' }} />
+        <div style={{ height: 14, width: 100, background: '#F0EDE8', borderRadius: 4, marginBottom: 24, animation: 'pulse 1.5s infinite' }} />
+        <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: 80, background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6 }} />)}
+        </div>
+      </div>
+    );
+  }
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-      <div className="spinner" style={{ width: 20, height: 20 }} />
-    </div>
-  );
+  if (!data) return null;
+
+  const filteredInvoices = (data.recentInvoices || []).filter(inv => {
+    if (filter === 'All') return true;
+    return inv.status?.toLowerCase() === filter.toLowerCase();
+  }).slice(0, 5);
+
+  const monthYear = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const minsAgo = Math.floor((new Date() - lastUpdated) / 60000);
 
   return (
-    <div className="fade-in">
-      {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <div className="section-label" style={{ marginBottom: 4 }}>Overview</div>
-        <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>
-          Good {new Date().getHours() < 12 ? 'morning' : 'evening'}, {user?.name?.split(' ')[0]}
-        </h1>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-        </p>
+    <div className="fade-in" style={{ padding: 24, background: '#FAFAF8', minHeight: '100vh' }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1A1A1A', marginBottom: 4 }}>Dashboard</h1>
+      <div style={{ fontSize: 12, color: '#999', marginBottom: 20 }}>{monthYear}</div>
+
+      <Label style={{ fontSize: 9, textTransform: 'uppercase', color: '#999', letterSpacing: '0.8px' }}>Reconciliation overview</Label>
+
+      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
+        {/* Total */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, padding: '14px 16px' }}>
+          <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#999', marginBottom: 6, fontWeight: 600 }}>Total Invoices</div>
+          <div style={{ fontSize: 20, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: '#1A1A1A' }}>{data.totalInvoices}</div>
+          <div style={{ fontSize: 10, color: '#BBBBBB', marginTop: 3 }}>From Purchase Register</div>
+        </div>
+        {/* Matched */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, padding: '14px 16px' }}>
+          <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#999', marginBottom: 6, fontWeight: 600 }}>Matched</div>
+          <div style={{ fontSize: 20, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: '#2D7D4E' }}>{data.matchedCount}</div>
+          <div style={{ fontSize: 10, color: '#BBBBBB', marginTop: 3 }}>Perfect or fuzzy matches</div>
+        </div>
+        {/* Mismatches */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, padding: '14px 16px' }}>
+          <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#999', marginBottom: 6, fontWeight: 600 }}>Mismatches</div>
+          <div style={{ fontSize: 20, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: '#C0392B' }}>{data.mismatchCount}</div>
+          <div style={{ fontSize: 10, color: '#BBBBBB', marginTop: 3 }}>Amount discrepancies</div>
+        </div>
+        {/* ITC at risk */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, padding: '14px 16px' }}>
+          <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#999', marginBottom: 6, fontWeight: 600 }}>ITC At Risk</div>
+          <div style={{ fontSize: 20, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: '#B8935A', fontFamily: "'JetBrains Mono', monospace" }}>{fmtAmt(data.itcAtRisk)}</div>
+          <div style={{ fontSize: 10, color: '#BBBBBB', marginTop: 3 }}>From missing & mismatches</div>
+        </div>
       </div>
 
-      {/* Quick stats */}
-      <Label>Quick Stats</Label>
-      <div className="stat-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
-        {stats.map((s, i) => (
-          <Card key={i}>
-            <div className="stat-value" style={{ color: s.color || 'var(--text-primary)' }}>{s.value}</div>
-            <div className="stat-label">{s.label}</div>
-          </Card>
+      <div className="ai-insights-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 16, marginBottom: 20 }}>
+        {/* Compliance Score Card */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, padding: 16 }}>
+          <div className="section-label" style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#999', fontWeight: 600, marginBottom: 10 }}>Compliance score</div>
+          <div style={{ fontSize: 40, fontWeight: 700, color: '#1A1A1A', lineHeight: 1 }}>{data.complianceScore}</div>
+          
+          <div style={{ marginTop: 8 }}>
+            <span style={{ 
+              borderRadius: 20, fontSize: 9, fontWeight: 600, padding: '2px 8px', textTransform: 'uppercase',
+              background: data.riskLevel === 'low' ? '#EAF5EE' : data.riskLevel === 'medium' ? '#FEF6E7' : '#FDECEA',
+              color: data.riskLevel === 'low' ? '#2D7D4E' : data.riskLevel === 'medium' ? '#B8935A' : '#C0392B'
+            }}>
+              {data.riskLevel} risk
+            </span>
+          </div>
+          
+          <div style={{ fontSize: 9, color: '#BBBBBB', marginTop: 4, marginBottom: 14 }}>
+            Updated {minsAgo === 0 ? 'just now' : `${minsAgo} min ago`}
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <Bar label="ITC Claimed" value={data.itcClaimed} max={Math.max(data.itcAvailable, 1)} colorClass="bar-fill-green" />
+            <div style={{ marginBottom: 6 }} />
+            <Bar label="ITC Available" value={data.itcAvailable} max={Math.max(data.itcAvailable, 1)} colorClass="bar-fill-amber" />
+            <div style={{ marginBottom: 6 }} />
+            <Bar label="ITC at Risk" value={data.itcAtRisk} max={Math.max(data.itcAvailable, 1)} colorClass="bar-fill-red" />
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #F0EDE8', margin: '0 0 12px 0' }} />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 9, color: '#BBBBBB', textTransform: 'uppercase', letterSpacing: '0.5px' }}>GSTR-1 due</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: data.gstr1DaysLeft <= 5 ? '#B8935A' : '#2D7D4E' }}>In {data.gstr1DaysLeft} days</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 9, color: '#BBBBBB', textTransform: 'uppercase', letterSpacing: '0.5px' }}>GSTR-3B due</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: data.gstr3bDaysLeft <= 5 ? '#B8935A' : '#2D7D4E' }}>In {data.gstr3bDaysLeft} days</span>
+          </div>
+        </div>
+
+        {/* Right card — two panels */}
+        <div className="upload-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, border: '1px solid #E8E5E0', borderRadius: 6, overflow: 'hidden', background: '#FFFFFF' }}>
+          {/* Recent alerts */}
+          <div style={{ padding: 14, borderRight: '1px solid #E8E5E0' }}>
+            <div className="section-label" style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#999', fontWeight: 600, marginBottom: 10 }}>Recent alerts</div>
+            {(data.recentAlerts || []).length === 0 ? (
+              <div style={{ fontSize: 11, color: '#BBBBBB' }}>No new alerts</div>
+            ) : (
+              (data.recentAlerts || []).map(a => <NotificationRow key={a._id} notification={a} />)
+            )}
+          </div>
+          {/* AI advisor */}
+          <div style={{ padding: 14 }}>
+            <div className="section-label" style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#999', fontWeight: 600, marginBottom: 10 }}>AI advisor</div>
+            <div style={{ fontSize: 10, color: '#555', lineHeight: 1.6, background: '#FAFAF8', borderRadius: 4, border: '1px solid #F0EDE8', borderLeft: '2px solid #B8935A', padding: 10, marginBottom: 10 }}>
+              "Your compliance score is {data.complianceScore}/100. Resolving your {data.mismatchCount} mismatches could unlock {fmtAmt(data.itcAtRisk)} in pending ITC claims."
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {['How to fix mismatches?', 'What is GSTR-2A?'].map(q => (
+                <div key={q} onClick={() => navigate('/ai-insights')} style={{ fontSize: 9, background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 20, padding: '3px 8px', color: '#666', cursor: 'pointer', transition: 'all 0.15s' }} onMouseOver={e => { e.currentTarget.style.borderColor = '#B8935A'; e.currentTarget.style.color = '#B8935A'; }} onMouseOut={e => { e.currentTarget.style.borderColor = '#E8E5E0'; e.currentTarget.style.color = '#666'; }}>
+                  {q}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Label style={{ fontSize: 9, textTransform: 'uppercase', color: '#999', letterSpacing: '0.8px' }}>Invoice ledger</Label>
+      
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        {['All', 'Mismatch', 'Missing', 'Matched'].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{
+            background: filter === f ? '#1A1A1A' : '#FFFFFF',
+            color: filter === f ? '#FFFFFF' : '#999',
+            border: filter === f ? '1px solid #1A1A1A' : '1px solid #E8E5E0',
+            borderRadius: 20, fontSize: 9, padding: '3px 10px', cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}>
+            {f}
+          </button>
         ))}
       </div>
 
-      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
-        {/* Compliance Score */}
-        <Card>
-          <Label>Compliance Score</Label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <ScoreRing score={score?.score || 0} riskLevel={score?.riskLevel || 'medium'} />
-            <div>
-              <div style={{ marginBottom: 8 }}>
-                <div className="stat-label">Risk Level</div>
-                <StatusBadge status={score?.riskLevel || 'medium'} label={score?.riskLevel || 'Medium'} />
-              </div>
-              <div>
-                <div className="stat-label">Mismatches</div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--red)' }}>{score?.mismatches || 0}</div>
-              </div>
-            </div>
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <Button variant="secondary" size="sm" onClick={() => navigate('/reconciliation')} style={{ width: '100%', justifyContent: 'center' }}>
-              View Reconciliation →
-            </Button>
-          </div>
-        </Card>
-
-        {/* ITC Summary */}
-        <Card>
-          <Label>ITC Summary</Label>
-          <div style={{ marginBottom: 6 }}>
-            <Bar label="Available ITC" value={itcAvail} max={itcTotal} colorClass="bar-fill-green" />
-            <Bar label="ITC Claimed"   value={itcClaimed} max={itcTotal} colorClass="bar-fill-amber" />
-            <Bar label="ITC at Risk"   value={itcAtRisk}  max={itcTotal} colorClass="bar-fill-red" />
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <Button variant="secondary" size="sm" onClick={() => navigate('/payments')} style={{ width: '100%', justifyContent: 'center' }}>
-              Unlock ITC →
-            </Button>
-          </div>
-        </Card>
-
-        {/* Recent Notifications */}
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <Label style={{ marginBottom: 0 }}>Recent Activity</Label>
-            <button onClick={() => navigate('/notifications')} style={{ fontSize: 10, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
-              View all
-            </button>
-          </div>
-          {notifications.length === 0 ? (
-            <div className="empty-state" style={{ padding: '20px 0' }}>No recent activity</div>
-          ) : notifications.map(n => <NotificationRow key={n._id} notification={n} />)}
-        </Card>
+      <div className="table-scroll-hint">Scroll horizontally to view more →</div>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Supplier GSTIN</th>
+              <th>Invoice No</th>
+              <th>Date</th>
+              <th>Taxable Amount</th>
+              <th>GST Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredInvoices.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#999', fontSize: 11 }}>No invoices found</td></tr>
+            ) : filteredInvoices.map(inv => (
+              <tr key={inv._id}>
+                <td><span className="mono">{inv.sellerGstin}</span></td>
+                <td><span className="mono">{inv.invoiceNumber}</span></td>
+                <td style={{ fontSize: 11, color: '#999' }}>{new Date(inv.invoiceDate).toLocaleDateString('en-IN')}</td>
+                <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500 }}>{fmtAmt(inv.taxableAmount)}</td>
+                <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500 }}>{fmtAmt(inv.gstAmount)}</td>
+                <td><StatusBadge status={inv.status} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Actions */}
-      <Label>Quick Actions</Label>
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <Button variant="primary" onClick={() => navigate('/invoices')}>
-          ◧ Upload Invoices
-        </Button>
-        <Button variant="secondary" onClick={() => navigate('/reconciliation')}>
-          ⇄ Run Reconciliation
-        </Button>
-        <Button variant="amber" onClick={() => navigate('/ai-insights')}>
-          ✦ Get AI Insights
-        </Button>
+      <div style={{ marginTop: 12 }}>
+        <button onClick={() => navigate('/invoices')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#B8935A', cursor: 'pointer', padding: 0 }}>
+          View all invoices →
+        </button>
       </div>
+
     </div>
   );
 }

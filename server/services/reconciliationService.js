@@ -1,88 +1,158 @@
 const Invoice = require('../models/Invoice');
 const ReconciliationResult = require('../models/ReconciliationResult');
+const Notification = require('../models/Notification');
 
-const AMOUNT_TOLERANCE = 0.01; // 1% tolerance
+function getLevenshteinDistance(a, b) {
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          Math.min(matrix[i][j - 1] + 1, // insertion
+                   matrix[i - 1][j] + 1) // deletion
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
 
 async function runReconciliation(userId) {
-  // Fetch all purchase invoices and GSTR-2A invoices for the user
-  const [purchaseInvoices, gstr2aInvoices] = await Promise.all([
-    Invoice.find({ uploadedBy: userId, source: 'purchase' }),
-    Invoice.find({ uploadedBy: userId, source: 'gstr2a' })
-  ]);
-
-  const results = { matched: 0, mismatches: 0, missing: 0, total: purchaseInvoices.length };
-  const gstr2aMap = new Map();
-
-  // Index GSTR-2A invoices by invoiceNumber + sellerGstin
-  for (const inv of gstr2aInvoices) {
-    const key = `${inv.invoiceNumber.toLowerCase()}::${inv.sellerGstin.toUpperCase()}`;
-    gstr2aMap.set(key, inv);
-  }
+  const purchaseInvoices = await Invoice.find({ uploadedBy: userId, source: 'purchase' });
+  const gstr2aInvoices = await Invoice.find({ uploadedBy: userId, source: 'gstr2a' });
 
   // Delete old reconciliation results for these invoices
-  const purchaseIds = purchaseInvoices.map(i => i._id);
-  await ReconciliationResult.deleteMany({ invoiceId: { $in: purchaseIds } });
+  const allInvoiceIds = [...purchaseInvoices.map(i => i._id), ...gstr2aInvoices.map(i => i._id)];
+  await ReconciliationResult.deleteMany({ invoiceId: { $in: allInvoiceIds } });
 
-  const reconciliationDocs = [];
+  const results = { matched: 0, mismatches: 0, missing: 0, totalProcessed: purchaseInvoices.length + gstr2aInvoices.length };
+  const docsToInsert = [];
+  const gstr2aMatched = new Set();
 
   for (const purchase of purchaseInvoices) {
-    const key = `${purchase.invoiceNumber.toLowerCase()}::${purchase.sellerGstin.toUpperCase()}`;
-    const portal = gstr2aMap.get(key);
+    let bestMatch = null;
+    let matchType = 'missing';
 
-    if (!portal) {
-      // Missing in GSTR-2A
-      reconciliationDocs.push({
+    for (const portal of gstr2aInvoices) {
+      if (gstr2aMatched.has(portal._id.toString())) continue;
+
+      if (purchase.sellerGstin.toUpperCase() === portal.sellerGstin.toUpperCase()) {
+        const isSameInv = purchase.invoiceNumber.toLowerCase() === portal.invoiceNumber.toLowerCase();
+        const diff = Math.abs(purchase.totalAmount - portal.totalAmount);
+        const tolerance = purchase.totalAmount * 0.01;
+
+        if (isSameInv) {
+          if (diff <= tolerance) {
+            bestMatch = portal;
+            matchType = 'exact';
+            break;
+          } else {
+            bestMatch = portal;
+            matchType = 'mismatch';
+            break;
+          }
+        } else {
+          const lev = getLevenshteinDistance(purchase.invoiceNumber.toLowerCase(), portal.invoiceNumber.toLowerCase());
+          if (lev <= 2 && diff <= tolerance) {
+            bestMatch = portal;
+            matchType = 'fuzzy';
+          }
+        }
+      }
+    }
+
+    if (matchType === 'exact') {
+      gstr2aMatched.add(bestMatch._id.toString());
+      docsToInsert.push({
+        invoiceId: purchase._id,
+        matchStatus: 'matched',
+        ourRecord: { totalAmount: purchase.totalAmount, gstAmount: purchase.gstAmount, buyerGstin: purchase.buyerGstin },
+        portalRecord: { totalAmount: bestMatch.totalAmount, gstAmount: bestMatch.gstAmount, buyerGstin: bestMatch.buyerGstin },
+        differenceAmount: 0,
+        confidenceScore: 100,
+        remarks: 'Exact match'
+      });
+      await Invoice.findByIdAndUpdate(purchase._id, { status: 'matched' });
+      await Invoice.findByIdAndUpdate(bestMatch._id, { status: 'matched' });
+      results.matched++;
+    } else if (matchType === 'fuzzy') {
+      gstr2aMatched.add(bestMatch._id.toString());
+      docsToInsert.push({
+        invoiceId: purchase._id,
+        matchStatus: 'matched',
+        ourRecord: { totalAmount: purchase.totalAmount, gstAmount: purchase.gstAmount, buyerGstin: purchase.buyerGstin },
+        portalRecord: { totalAmount: bestMatch.totalAmount, gstAmount: bestMatch.gstAmount, buyerGstin: bestMatch.buyerGstin },
+        differenceAmount: Math.abs(purchase.totalAmount - bestMatch.totalAmount),
+        confidenceScore: 80,
+        remarks: 'Fuzzy match on invoice number'
+      });
+      await Invoice.findByIdAndUpdate(purchase._id, { status: 'matched' });
+      await Invoice.findByIdAndUpdate(bestMatch._id, { status: 'matched' });
+      results.matched++;
+    } else if (matchType === 'mismatch') {
+      gstr2aMatched.add(bestMatch._id.toString());
+      const diffAmount = purchase.totalAmount - bestMatch.totalAmount;
+      docsToInsert.push({
+        invoiceId: purchase._id,
+        matchStatus: 'mismatch',
+        ourRecord: { totalAmount: purchase.totalAmount, gstAmount: purchase.gstAmount, buyerGstin: purchase.buyerGstin },
+        portalRecord: { totalAmount: bestMatch.totalAmount, gstAmount: bestMatch.gstAmount, buyerGstin: bestMatch.buyerGstin },
+        differenceAmount: diffAmount,
+        confidenceScore: 60,
+        remarks: 'Amount mismatch'
+      });
+      await Invoice.findByIdAndUpdate(purchase._id, { status: 'mismatch' });
+      await Invoice.findByIdAndUpdate(bestMatch._id, { status: 'mismatch' });
+      results.mismatches++;
+    } else {
+      docsToInsert.push({
         invoiceId: purchase._id,
         matchStatus: 'missing',
-        differenceAmount: purchase.totalAmount,
-        ourRecord: { totalAmount: purchase.totalAmount, gstAmount: purchase.gstAmount },
+        ourRecord: { totalAmount: purchase.totalAmount, gstAmount: purchase.gstAmount, buyerGstin: purchase.buyerGstin },
         portalRecord: null,
+        differenceAmount: purchase.totalAmount,
         confidenceScore: 0,
-        remarks: 'Invoice not found in GSTR-2A portal data'
+        remarks: 'Supplier may not have filed'
       });
       await Invoice.findByIdAndUpdate(purchase._id, { status: 'missing' });
       results.missing++;
-    } else {
-      const diff = Math.abs(purchase.totalAmount - portal.totalAmount);
-      const tolerance = purchase.totalAmount * AMOUNT_TOLERANCE;
-      const isMismatch = diff > tolerance ||
-        purchase.gstAmount !== portal.gstAmount ||
-        purchase.buyerGstin.toUpperCase() !== portal.buyerGstin.toUpperCase();
-
-      const confidenceScore = isMismatch
-        ? Math.max(0, 100 - Math.round((diff / (purchase.totalAmount || 1)) * 1000))
-        : 100;
-
-      reconciliationDocs.push({
-        invoiceId: purchase._id,
-        matchStatus: isMismatch ? 'mismatch' : 'matched',
-        differenceAmount: diff,
-        ourRecord: {
-          totalAmount: purchase.totalAmount,
-          gstAmount: purchase.gstAmount,
-          buyerGstin: purchase.buyerGstin
-        },
-        portalRecord: {
-          totalAmount: portal.totalAmount,
-          gstAmount: portal.gstAmount,
-          buyerGstin: portal.buyerGstin
-        },
-        confidenceScore,
-        remarks: isMismatch
-          ? `Amount difference: ₹${diff.toFixed(2)}. GST discrepancy detected.`
-          : 'Invoice matches portal record exactly'
-      });
-
-      await Invoice.findByIdAndUpdate(purchase._id, { status: isMismatch ? 'mismatch' : 'matched' });
-
-      if (isMismatch) results.mismatches++;
-      else results.matched++;
     }
   }
 
-  if (reconciliationDocs.length > 0) {
-    await ReconciliationResult.insertMany(reconciliationDocs);
+  for (const portal of gstr2aInvoices) {
+    if (!gstr2aMatched.has(portal._id.toString())) {
+      docsToInsert.push({
+        invoiceId: portal._id,
+        matchStatus: 'missing',
+        ourRecord: null,
+        portalRecord: { totalAmount: portal.totalAmount, gstAmount: portal.gstAmount, buyerGstin: portal.buyerGstin },
+        differenceAmount: portal.totalAmount,
+        confidenceScore: 0,
+        remarks: 'Not in your records'
+      });
+      await Invoice.findByIdAndUpdate(portal._id, { status: 'missing' });
+      results.missing++;
+    }
   }
+
+  if (docsToInsert.length > 0) {
+    await ReconciliationResult.insertMany(docsToInsert);
+  }
+
+  await Notification.create({
+    userId,
+    type: 'success',
+    message: `Reconciliation complete. ${results.matched} matched, ${results.mismatches} mismatches, ${results.missing} missing.`
+  });
 
   return results;
 }
