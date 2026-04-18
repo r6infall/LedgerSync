@@ -1,0 +1,1 @@
+import Card from '../../components/ui/Card'; export default function BuyerGSTRSummary() { return <Card title="BuyerGSTRSummary"><p>Under construction based on new role-specific architecture.</p></Card>; }

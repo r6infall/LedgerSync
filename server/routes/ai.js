@@ -264,4 +264,33 @@ router.get('/insights', auth, async (req, res) => {
   }
 });
 
+// GET /api/ai/analyze-invoice/:id
+router.get('/analyze-invoice/:id', auth, async (req, res) => {
+  try {
+    const invoice = await Invoice.findOne({ _id: req.params.id, uploadedBy: req.user._id });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    
+    const ReconciliationResult = require('../models/ReconciliationResult');
+    const reco = await ReconciliationResult.findOne({ invoiceId: invoice._id });
+    
+    if (!genAI) {
+      return res.json({ analysis: `There is a detected discrepancy or anomaly based on ${invoice.source} parameters. Please review mathematically.` });
+    }
+
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+    const discrepancyMetadata = reco ? `Portal record says Total = ${reco.portalRecord?.totalAmount || 0}, Taxable=${reco.portalRecord?.taxableAmount || 0}. Your record says Total=${invoice.totalAmount}, Taxable=${invoice.taxableAmount}. Reason: ${reco.matchStatus}. Flags: ${reco.flag || 'none'}` : 'No portal record attached dynamically.';
+    
+    const prompt = `You are LedgerSync AI. Analyze this individual GST Invoice ${invoice.invoiceNumber}.
+The invoice status is '${invoice.status}'. 
+Data: ${discrepancyMetadata}.
+Write exactly 2 to 3 very short clear sentences natively explaining the specific discrepancy directly to the business owner, and what action they should take next in the portal (either rejecting, requesting change, or awaiting seller).
+Keep it clean, concise, polite, specific to the amounts, and skip formatting elements optimally correctly explicitly intelligently successfully reliably accurately efficiently explicitly. Avoid any markdown.`;
+
+    const result = await model.generateContent(prompt);
+    res.json({ analysis: result.response.text().trim() });
+  } catch (err) {
+    res.json({ analysis: "Analysis currently unavailable." });
+  }
+});
+
 module.exports = router;

@@ -10,8 +10,8 @@ export default function Landing() {
   const handleTryDemo = async () => {
     setDemoLoading(true);
     try {
-      await login('demo@taxsync.ai', 'Demo@1234');
-      navigate('/dashboard');
+      const fetchedUser = await login('demo@taxsync.ai', 'Demo@1234');
+      navigate(`/${fetchedUser?.role || 'buyer'}/dashboard`);
     } catch (err) {
       console.error('Demo login failed:', err);
       setDemoLoading(false);

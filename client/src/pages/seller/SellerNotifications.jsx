@@ -1,0 +1,1 @@
+import Card from '../../components/ui/Card'; export default function SellerNotifications() { return <Card title="SellerNotifications"><p>Under construction based on new role-specific architecture.</p></Card>; }

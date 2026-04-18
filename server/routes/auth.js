@@ -24,13 +24,23 @@ router.post('/sync', async (req, res) => {
 
     let user = await User.findOne({ firebaseUid: decodedToken.uid });
     
+    if (!user && (decodedToken.email || email)) {
+      user = await User.findOne({ email: decodedToken.email || email });
+    }
+
+    let isNewUser = false;
+    
     if (user) {
-      // Update existing
+      // Update existing or mapped email legacy accounts
+      if (!user.firebaseUid) {
+        user.firebaseUid = decodedToken.uid;
+      }
       user.name = name || user.name;
       user.gstin = gstin || user.gstin;
       user.businessName = businessName || user.businessName;
       await user.save();
     } else {
+      isNewUser = true;
       // Create new
       user = await User.create({
         firebaseUid: decodedToken.uid,
@@ -42,7 +52,7 @@ router.post('/sync', async (req, res) => {
       });
     }
 
-    res.status(200).json({ user });
+    res.status(200).json({ user, isNewUser });
   } catch (err) {
     console.error('Sync Error:', err);
     res.status(500).json({ error: err.message });

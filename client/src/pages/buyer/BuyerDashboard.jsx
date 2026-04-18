@@ -1,0 +1,1 @@
+import Card from '../../components/ui/Card'; export default function BuyerDashboard() { return <Card title="BuyerDashboard"><p>Under construction based on new role-specific architecture.</p></Card>; }

@@ -1,0 +1,1 @@
+import Card from '../../components/ui/Card'; export default function BuyerCompliance() { return <Card title="BuyerCompliance"><p>Under construction based on new role-specific architecture.</p></Card>; }

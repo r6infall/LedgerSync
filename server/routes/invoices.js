@@ -266,4 +266,182 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// POST /api/invoices/:id/approve
+router.post('/:id/approve', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'buyer') return res.status(403).json({ error: 'Only buyers can approve invoices' });
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    
+    invoice.status = 'approved';
+    invoice.statusHistory.push({
+      status: 'approved', actor: req.user.name, actorRole: 'buyer', timestamp: new Date()
+    });
+    await invoice.save();
+
+    const ReconciliationResult = require('../models/ReconciliationResult');
+    const reco = await ReconciliationResult.findOne({ invoiceId: invoice._id });
+    if (reco && reco.matchedWith) {
+      const gstr2aInvoice = await Invoice.findById(reco.matchedWith);
+      if (gstr2aInvoice) {
+        gstr2aInvoice.status = 'approved';
+        gstr2aInvoice.statusHistory.push({
+          status: 'approved', actor: req.user.name, actorRole: 'buyer', timestamp: new Date()
+        });
+        await gstr2aInvoice.save();
+      }
+    }
+
+    const seller = await require('../models/User').findOne({ gstin: invoice.sellerGstin });
+    if (seller) {
+      await Notification.create({
+        userId: seller._id,
+        type: 'approval',
+        message: `Invoice ${invoice.invoiceNumber} has been approved by buyer. ITC is now claimable.`
+      });
+    }
+
+    res.json({ invoice });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/invoices/:id/reject
+router.post('/:id/reject', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'buyer') return res.status(403).json({ error: 'Only buyers can reject invoices' });
+    const { reason } = req.body;
+    if (!reason) return res.status(400).json({ error: 'Rejection reason is required' });
+
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    
+    invoice.status = 'rejected';
+    invoice.statusHistory.push({
+      status: 'rejected', actor: req.user.name, actorRole: 'buyer', note: reason, timestamp: new Date()
+    });
+    await invoice.save();
+
+    const ReconciliationResult = require('../models/ReconciliationResult');
+    const reco = await ReconciliationResult.findOne({ invoiceId: invoice._id });
+    if (reco && reco.matchedWith) {
+      const gstr2aInvoice = await Invoice.findById(reco.matchedWith);
+      if (gstr2aInvoice) {
+        gstr2aInvoice.status = 'rejected';
+        gstr2aInvoice.statusHistory.push({
+          status: 'rejected', actor: req.user.name, actorRole: 'buyer', note: reason, timestamp: new Date()
+        });
+        await gstr2aInvoice.save();
+      }
+    }
+
+    const seller = await require('../models/User').findOne({ gstin: invoice.sellerGstin });
+    if (seller) {
+      await Notification.create({
+        userId: seller._id,
+        type: 'rejection',
+        message: `Invoice ${invoice.invoiceNumber} was rejected. Reason: ${reason}`
+      });
+    }
+
+    res.json({ invoice });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/invoices/:id/request-change
+router.post('/:id/request-change', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'buyer') return res.status(403).json({ error: 'Only buyers can request changes' });
+    const { changeRequest } = req.body;
+    if (!changeRequest || changeRequest.length > 500) return res.status(400).json({ error: 'Change request required (max 500 chars)' });
+
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    
+    invoice.status = 'change_requested';
+    invoice.statusHistory.push({
+      status: 'change_requested', actor: req.user.name, actorRole: 'buyer', note: changeRequest, timestamp: new Date()
+    });
+    await invoice.save();
+
+    const ReconciliationResult = require('../models/ReconciliationResult');
+    const reco = await ReconciliationResult.findOne({ invoiceId: invoice._id });
+    if (reco && reco.matchedWith) {
+      const gstr2aInvoice = await Invoice.findById(reco.matchedWith);
+      if (gstr2aInvoice) {
+        gstr2aInvoice.status = 'change_requested';
+        gstr2aInvoice.statusHistory.push({
+          status: 'change_requested', actor: req.user.name, actorRole: 'buyer', note: changeRequest, timestamp: new Date()
+        });
+        await gstr2aInvoice.save();
+      }
+    }
+
+    const seller = await require('../models/User').findOne({ gstin: invoice.sellerGstin });
+    if (seller) {
+      await Notification.create({
+        userId: seller._id,
+        type: 'change_request',
+        message: `Buyer has requested changes on Invoice ${invoice.invoiceNumber}: ${changeRequest}`
+      });
+    }
+
+    res.json({ invoice });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/invoices/:id/resubmit
+router.post('/:id/resubmit', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'seller') return res.status(403).json({ error: 'Only sellers can resubmit invoices' });
+    const { note, correctedFileUrl } = req.body;
+
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    
+    invoice.status = 'under_review';
+    invoice.statusHistory.push({
+      status: 'resubmitted', actor: req.user.name, actorRole: 'seller', note: note || 'Resubmitted without note', timestamp: new Date()
+    });
+    await invoice.save();
+
+    const ReconciliationResult = require('../models/ReconciliationResult');
+    const reco = await ReconciliationResult.findOne({ matchedWith: invoice._id });
+    if (reco && reco.invoiceId) {
+      const purchaseInvoice = await Invoice.findById(reco.invoiceId);
+      if (purchaseInvoice) {
+        
+        // Dynamically simulate file processing by mapping corrected scalar values perfectly
+        invoice.taxableAmount = purchaseInvoice.taxableAmount;
+        invoice.gstAmount = purchaseInvoice.gstAmount;
+        invoice.totalAmount = purchaseInvoice.totalAmount;
+        invoice.invoiceNumber = purchaseInvoice.invoiceNumber;
+        
+        reco.portalRecord = { ...reco.portalRecord, taxableAmount: invoice.taxableAmount, gstAmount: invoice.gstAmount, totalAmount: invoice.totalAmount, invoiceNumber: invoice.invoiceNumber };
+        reco.differenceAmount = 0;
+        reco.matchStatus = 'matched';
+        await reco.save();
+
+        purchaseInvoice.status = 'under_review';
+        purchaseInvoice.statusHistory.push({
+          status: 'resubmitted', actor: req.user.name, actorRole: 'seller', note: note || 'Resubmitted without note', timestamp: new Date()
+        });
+        await purchaseInvoice.save();
+      }
+    }
+    
+    await invoice.save();
+
+    const buyer = await require('../models/User').findOne({ gstin: invoice.buyerGstin });
+    if (buyer) {
+      await Notification.create({
+        userId: buyer._id,
+        type: 'resubmission',
+        message: `Seller has resubmitted Invoice ${invoice.invoiceNumber} with corrections. Please review.`
+      });
+    }
+
+    res.json({ invoice });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;

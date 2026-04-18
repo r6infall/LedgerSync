@@ -1,0 +1,1 @@
+import Card from '../../components/ui/Card'; export default function BuyerMissingInvoices() { return <Card title="BuyerMissingInvoices"><p>Under construction based on new role-specific architecture.</p></Card>; }
