@@ -1,5 +1,5 @@
 import { Outlet, Navigate } from 'react-router-dom';
-import Sidebar from './Sidebar';
+import Navbar from './Navbar';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
@@ -13,9 +13,9 @@ export default function Layout() {
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <div className="page-wrap">
-      <Sidebar />
-      <main className="main-content fade-in">
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <Navbar />
+      <main className="fade-in" style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
         <Outlet />
       </main>
     </div>

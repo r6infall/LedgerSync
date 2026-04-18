@@ -1,24 +1,31 @@
 import axios from 'axios';
+import { auth } from '../firebase';
 
 const api = axios.create({
   baseURL: '/api',
   headers: { 'Content-Type': 'application/json' }
 });
 
-// Attach JWT token on every request
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('ledgersync_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+// Attach Firebase ID token on every request
+api.interceptors.request.use(async (config) => {
+  const user = auth.currentUser;
+  if (user) {
+    const token = await user.getIdToken();
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
 // Handle 401 globally
 api.interceptors.response.use(
   res => res,
-  err => {
+  async (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('ledgersync_token');
-      localStorage.removeItem('ledgersync_user');
+      // Firebase auth state change listener will handle the UI redirect
+      // if the user is truly signed out
+      if (auth.currentUser) {
+         await auth.signOut();
+      }
       window.location.href = '/login';
     }
     return Promise.reject(err);
