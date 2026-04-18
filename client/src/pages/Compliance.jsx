@@ -25,7 +25,27 @@ export default function Compliance() {
   if (loading) {
     return (
       <div style={{ padding: 24 }}>
-        <div className="spinner" />
+        <div className="skeleton skeleton-title" style={{ width: 140, marginBottom: 8 }} />
+        <div className="skeleton skeleton-text" style={{ width: 200, marginBottom: 24 }} />
+        {/* Score hero skeleton */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, padding: 20, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 32 }}>
+          <div className="skeleton skeleton-circle" style={{ width: 100, height: 100, flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div className="skeleton" style={{ width: 70, height: 20, borderRadius: 20, marginBottom: 10 }} />
+            <div className="skeleton skeleton-text" style={{ width: '60%', marginBottom: 8 }} />
+            <div className="skeleton skeleton-text" style={{ width: '40%', marginBottom: 8 }} />
+            <div className="skeleton skeleton-text" style={{ width: '50%' }} />
+          </div>
+        </div>
+        {/* Two cards skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          {[1,2].map(i => (
+            <div key={i} className="skeleton-card">
+              <div className="skeleton skeleton-text" style={{ width: '50%', marginBottom: 16 }} />
+              {[1,2,3].map(j => <div key={j} className="skeleton skeleton-text" style={{ marginBottom: 12 }} />)}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

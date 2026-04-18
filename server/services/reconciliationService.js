@@ -4,21 +4,16 @@ const Notification = require('../models/Notification');
 
 function getLevenshteinDistance(a, b) {
   const matrix = [];
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
+  for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+  for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
   for (let i = 1; i <= b.length; i++) {
     for (let j = 1; j <= a.length; j++) {
       if (b.charAt(i - 1) === a.charAt(j - 1)) {
         matrix[i][j] = matrix[i - 1][j - 1];
       } else {
         matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          Math.min(matrix[i][j - 1] + 1, // insertion
-                   matrix[i - 1][j] + 1) // deletion
+          matrix[i - 1][j - 1] + 1, 
+          Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
         );
       }
     }
@@ -30,13 +25,25 @@ async function runReconciliation(userId) {
   const purchaseInvoices = await Invoice.find({ uploadedBy: userId, source: 'purchase' });
   const gstr2aInvoices = await Invoice.find({ uploadedBy: userId, source: 'gstr2a' });
 
-  // Delete old reconciliation results for these invoices
   const allInvoiceIds = [...purchaseInvoices.map(i => i._id), ...gstr2aInvoices.map(i => i._id)];
   await ReconciliationResult.deleteMany({ invoiceId: { $in: allInvoiceIds } });
 
   const results = { matched: 0, mismatches: 0, missing: 0, totalProcessed: purchaseInvoices.length + gstr2aInvoices.length };
   const docsToInsert = [];
   const gstr2aMatched = new Set();
+
+  const createRecord = (inv) => {
+    if (!inv) return null;
+    return {
+      invoiceNumber: inv.invoiceNumber,
+      sellerGstin: inv.sellerGstin,
+      invoiceDate: inv.invoiceDate,
+      taxableAmount: inv.taxableAmount,
+      gstAmount: inv.gstAmount,
+      totalAmount: inv.totalAmount,
+      buyerGstin: inv.buyerGstin
+    };
+  };
 
   for (const purchase of purchaseInvoices) {
     let bestMatch = null;
@@ -75,8 +82,8 @@ async function runReconciliation(userId) {
       docsToInsert.push({
         invoiceId: purchase._id,
         matchStatus: 'matched',
-        ourRecord: { totalAmount: purchase.totalAmount, gstAmount: purchase.gstAmount, buyerGstin: purchase.buyerGstin },
-        portalRecord: { totalAmount: bestMatch.totalAmount, gstAmount: bestMatch.gstAmount, buyerGstin: bestMatch.buyerGstin },
+        ourRecord: createRecord(purchase),
+        portalRecord: createRecord(bestMatch),
         differenceAmount: 0,
         confidenceScore: 100,
         remarks: 'Exact match'
@@ -89,8 +96,8 @@ async function runReconciliation(userId) {
       docsToInsert.push({
         invoiceId: purchase._id,
         matchStatus: 'matched',
-        ourRecord: { totalAmount: purchase.totalAmount, gstAmount: purchase.gstAmount, buyerGstin: purchase.buyerGstin },
-        portalRecord: { totalAmount: bestMatch.totalAmount, gstAmount: bestMatch.gstAmount, buyerGstin: bestMatch.buyerGstin },
+        ourRecord: createRecord(purchase),
+        portalRecord: createRecord(bestMatch),
         differenceAmount: Math.abs(purchase.totalAmount - bestMatch.totalAmount),
         confidenceScore: 80,
         remarks: 'Fuzzy match on invoice number'
@@ -100,13 +107,12 @@ async function runReconciliation(userId) {
       results.matched++;
     } else if (matchType === 'mismatch') {
       gstr2aMatched.add(bestMatch._id.toString());
-      const diffAmount = purchase.totalAmount - bestMatch.totalAmount;
       docsToInsert.push({
         invoiceId: purchase._id,
         matchStatus: 'mismatch',
-        ourRecord: { totalAmount: purchase.totalAmount, gstAmount: purchase.gstAmount, buyerGstin: purchase.buyerGstin },
-        portalRecord: { totalAmount: bestMatch.totalAmount, gstAmount: bestMatch.gstAmount, buyerGstin: bestMatch.buyerGstin },
-        differenceAmount: diffAmount,
+        ourRecord: createRecord(purchase),
+        portalRecord: createRecord(bestMatch),
+        differenceAmount: purchase.totalAmount - bestMatch.totalAmount,
         confidenceScore: 60,
         remarks: 'Amount mismatch'
       });
@@ -117,7 +123,7 @@ async function runReconciliation(userId) {
       docsToInsert.push({
         invoiceId: purchase._id,
         matchStatus: 'missing',
-        ourRecord: { totalAmount: purchase.totalAmount, gstAmount: purchase.gstAmount, buyerGstin: purchase.buyerGstin },
+        ourRecord: createRecord(purchase),
         portalRecord: null,
         differenceAmount: purchase.totalAmount,
         confidenceScore: 0,
@@ -134,7 +140,7 @@ async function runReconciliation(userId) {
         invoiceId: portal._id,
         matchStatus: 'missing',
         ourRecord: null,
-        portalRecord: { totalAmount: portal.totalAmount, gstAmount: portal.gstAmount, buyerGstin: portal.buyerGstin },
+        portalRecord: createRecord(portal),
         differenceAmount: portal.totalAmount,
         confidenceScore: 0,
         remarks: 'Not in your records'

@@ -130,10 +130,12 @@ router.post('/upload/:source', auth, upload.single('file'), async (req, res) => 
     });
 
     if (validInvoices.length > 0) {
+      // Replace existing invoices of this source to prevent duplicates on re-upload
+      await Invoice.deleteMany({ uploadedBy: req.user._id, source: source });
       await Invoice.insertMany(validInvoices);
       await Notification.create({
         userId: req.user._id,
-        message: `${validInvoices.length} ${source} invoices uploaded successfully`,
+        message: `${validInvoices.length} ${source} invoices uploaded and synced successfully`,
         type: 'success'
       });
     }

@@ -207,8 +207,8 @@ export default function Reconciliation() {
               </td></tr>
             ) : results.map(r => (
               <tr key={r._id} onClick={() => setSelected(r)}>
-                <td><span className="mono">{r.invoiceId?.invoiceNumber || '—'}</span></td>
-                <td><span className="mono">{r.invoiceId?.sellerGstin || '—'}</span></td>
+                <td><span className="mono">{r.ourRecord?.invoiceNumber || r.portalRecord?.invoiceNumber || '—'}</span></td>
+                <td><span className="mono">{r.ourRecord?.sellerGstin || r.portalRecord?.sellerGstin || '—'}</span></td>
                 <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{fmt(r.ourRecord?.totalAmount)}</td>
                 <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{r.portalRecord ? fmt(r.portalRecord?.totalAmount) : <span style={{ color: 'var(--text-faint)' }}>—</span>}</td>
                 <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: r.differenceAmount > 0 ? 'var(--red)' : 'var(--text-muted)' }}>

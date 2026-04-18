@@ -52,12 +52,29 @@ export default function Invoices() {
   const handleReset = () => {
     setFilters({ status: '', gstin: '', dateFrom: '', dateTo: '' });
     if (page === 1) {
-      // Need a small timeout to let state update before fetch, or pass it directly
       setTimeout(() => fetchInvoices(), 0);
     } else {
       setPage(1);
     }
   };
+
+  const SkeletonTable = () => (
+    <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, overflow: 'hidden' }}>
+      <div style={{ padding: '10px 16px', background: '#FAFAF8', borderBottom: '1px solid #E8E5E0' }}>
+        <div className="skeleton skeleton-text" style={{ width: 80 }} />
+      </div>
+      {[1,2,3,4,5,6,7,8].map(i => (
+        <div key={i} style={{ display: 'flex', gap: 16, padding: '11px 16px', borderBottom: '1px solid #F5F2EE', alignItems: 'center' }}>
+          <div className="skeleton skeleton-text" style={{ width: '14%' }} />
+          <div className="skeleton skeleton-text" style={{ width: '22%' }} />
+          <div className="skeleton skeleton-text" style={{ width: '18%' }} />
+          <div className="skeleton skeleton-text" style={{ width: '12%' }} />
+          <div className="skeleton skeleton-text" style={{ width: '12%' }} />
+          <div className="skeleton" style={{ width: 56, height: 18, borderRadius: 20 }} />
+        </div>
+      ))}
+    </div>
+  );
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
@@ -120,6 +137,7 @@ export default function Invoices() {
       </div>
 
       <div className="table-scroll-hint">Scroll horizontally to view more →</div>
+      {loading ? <SkeletonTable /> : (
       <div className="table-container">
         <table>
           <thead>
@@ -135,9 +153,7 @@ export default function Invoices() {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '32px' }}><div className="spinner" style={{ margin: '0 auto' }}/></td></tr>
-            ) : invoices.length === 0 ? (
+            {invoices.length === 0 ? (
               <tr><td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: '#999', fontSize: 11 }}>No invoices found</td></tr>
             ) : invoices.map(inv => (
               <tr key={inv._id}>
@@ -163,6 +179,7 @@ export default function Invoices() {
           </tbody>
         </table>
       </div>
+      )}
 
       {!loading && total > 0 && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>

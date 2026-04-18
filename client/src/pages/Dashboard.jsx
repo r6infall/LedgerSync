@@ -40,11 +40,34 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div style={{ padding: 24, background: '#FAFAF8', minHeight: '100vh' }}>
-        <div style={{ height: 24, width: 150, background: '#F0EDE8', borderRadius: 4, marginBottom: 8, animation: 'pulse 1.5s infinite' }} />
-        <div style={{ height: 14, width: 100, background: '#F0EDE8', borderRadius: 4, marginBottom: 24, animation: 'pulse 1.5s infinite' }} />
-        <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
-          {[1,2,3,4].map(i => <div key={i} style={{ height: 80, background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6 }} />)}
+      <div style={{ padding: 24 }}>
+        {/* Header skeleton */}
+        <div className="skeleton skeleton-title" style={{ width: 160, marginBottom: 8 }} />
+        <div className="skeleton skeleton-text" style={{ width: 100, marginBottom: 24 }} />
+        {/* KPI cards skeleton */}
+        <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
+          {[1,2,3,4].map(i => (
+            <div key={i} className="skeleton-card">
+              <div className="skeleton skeleton-text" style={{ width: '60%', marginBottom: 10 }} />
+              <div className="skeleton skeleton-title" style={{ width: '40%', marginBottom: 6 }} />
+              <div className="skeleton skeleton-text" style={{ width: '80%' }} />
+            </div>
+          ))}
+        </div>
+        {/* Table skeleton */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid #E8E5E0', background: '#FAFAF8' }}>
+            <div className="skeleton skeleton-text" style={{ width: 120 }} />
+          </div>
+          {[1,2,3,4,5].map(i => (
+            <div key={i} style={{ display: 'flex', gap: 16, padding: '12px 16px', borderBottom: '1px solid #F5F2EE', alignItems: 'center' }}>
+              <div className="skeleton skeleton-text" style={{ width: '15%' }} />
+              <div className="skeleton skeleton-text" style={{ width: '25%' }} />
+              <div className="skeleton skeleton-text" style={{ width: '20%' }} />
+              <div className="skeleton skeleton-text" style={{ width: '15%' }} />
+              <div className="skeleton" style={{ width: 60, height: 18, borderRadius: 20 }} />
+            </div>
+          ))}
         </div>
       </div>
     );

@@ -83,7 +83,17 @@ export default function Notifications() {
 
       <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, overflow: 'hidden' }}>
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center' }}><div className="spinner" style={{ margin: '0 auto' }} /></div>
+          <div>
+            {[1,2,3,4,5].map(i => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid #F0EDE8' }}>
+                <div style={{ width: 4, height: 36, borderRadius: 2, flexShrink: 0 }} className="skeleton" />
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton skeleton-text" style={{ width: '70%', marginBottom: 8 }} />
+                  <div className="skeleton skeleton-text" style={{ width: '30%' }} />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : filteredNotifications.length === 0 ? (
           <div style={{ padding: 40, textAlign: 'center', color: '#999', fontSize: 12 }}>No notifications found in this category.</div>
         ) : (
