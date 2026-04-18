@@ -1,5 +1,6 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import Navbar from './Navbar';
+import AIAdvisorPanel from './ui/AIAdvisorPanel';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
@@ -18,6 +19,7 @@ export default function Layout() {
       <main className="fade-in" style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
         <Outlet />
       </main>
+      <AIAdvisorPanel />
     </div>
   );
 }

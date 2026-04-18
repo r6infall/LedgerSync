@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 export default function Dashboard() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [filter, setFilter] = useState('All');
@@ -18,6 +19,10 @@ export default function Dashboard() {
       const res = await api.get('/dashboard/kpis');
       setData(res.data);
       setLastUpdated(new Date());
+      
+      api.get('/ai/insights').then(r => {
+        if (r.data && r.data.insights) setInsights(r.data.insights);
+      }).catch(e => console.error(e));
     } catch (err) {
       console.error('Failed to fetch dashboard KPIs', err);
     } finally {
@@ -204,9 +209,31 @@ export default function Dashboard() {
       </div>
 
       <div style={{ marginTop: 12 }}>
-        <button onClick={() => navigate('/invoices')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#B8935A', cursor: 'pointer', padding: 0 }}>
+        <button onClick={() => navigate('/invoices')} style={{ background: 'none', border: 'none', fontSize: 12, color: '#B8935A', cursor: 'pointer', padding: 0 }}>
           View all invoices →
         </button>
+      </div>
+
+      {/* AI Insights Card */}
+      <div style={{ background: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: 6, padding: 16, marginTop: 20 }}>
+        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#999', fontWeight: 600, marginBottom: 12 }}>
+          AI insights
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {insights.length > 0 ? insights.map((insight, idx) => (
+            <div key={idx} style={{
+              borderLeft: '2px solid #B8935A', background: '#FAFAF8',
+              padding: '10px 12px', borderRadius: 4, fontSize: 12, color: '#555', lineHeight: 1.6
+            }}>
+              {insight}
+            </div>
+          )) : (
+            <div style={{ fontSize: 12, color: '#999' }}>Loading AI insights...</div>
+          )}
+        </div>
+        <div style={{ fontSize: 10, color: '#BBBBBB', marginTop: 12 }}>
+          Powered by Gemini
+        </div>
       </div>
 
     </div>
