@@ -6,7 +6,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Invoices from './pages/Invoices';
+import InvoiceDetail from './pages/InvoiceDetail';
 import Reconciliation from './pages/Reconciliation';
+import Compliance from './pages/Compliance';
 import AIInsights from './pages/AIInsights';
 import Payments from './pages/Payments';
 import Notifications from './pages/Notifications';
@@ -25,6 +27,8 @@ export default function App() {
             <Route path="/dashboard"      element={<Dashboard />} />
             <Route path="/upload"         element={<Upload />} />
             <Route path="/invoices"       element={<Invoices />} />
+            <Route path="/invoices/:id"   element={<InvoiceDetail />} />
+            <Route path="/compliance"     element={<Compliance />} />
             <Route path="/reconciliation" element={<Reconciliation />} />
             <Route path="/ai-insights"    element={<AIInsights />} />
             <Route path="/payments"       element={<Payments />} />

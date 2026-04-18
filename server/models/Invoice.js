@@ -20,6 +20,8 @@ const invoiceSchema = new mongoose.Schema({
     required: true
   },
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  isFlagged: { type: Boolean, default: false },
+  notes: { type: String, trim: true },
   createdAt: { type: Date, default: Date.now }
 });
 

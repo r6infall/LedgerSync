@@ -24,7 +24,7 @@ const upload = multer({
 // GET /api/invoices — list invoices for logged-in user
 router.get('/', auth, async (req, res) => {
   try {
-    const { status, source, search, page = 1, limit = 20 } = req.query;
+    const { status, source, search, gstin, dateFrom, dateTo, page = 1, limit = 20 } = req.query;
     const query = { uploadedBy: req.user._id };
     if (status) query.status = status;
     if (source) query.source = source;
@@ -34,6 +34,14 @@ router.get('/', auth, async (req, res) => {
         { sellerGstin: { $regex: search, $options: 'i' } },
         { buyerGstin: { $regex: search, $options: 'i' } }
       ];
+    }
+    if (gstin) {
+      query.sellerGstin = { $regex: gstin, $options: 'i' };
+    }
+    if (dateFrom || dateTo) {
+      query.invoiceDate = {};
+      if (dateFrom) query.invoiceDate.$gte = new Date(dateFrom);
+      if (dateTo) query.invoiceDate.$lte = new Date(dateTo);
     }
     const total = await Invoice.countDocuments(query);
     const invoices = await Invoice.find(query)
@@ -153,6 +161,61 @@ router.delete('/all', auth, async (req, res) => {
       // Let's just delete all ReconciliationResults because this is a single user prototype.
     }
     res.json({ message: 'All invoices cleared successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/invoices/:id/detail
+router.get('/:id/detail', auth, async (req, res) => {
+  try {
+    const invoice = await Invoice.findOne({ _id: req.params.id, uploadedBy: req.user._id });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    
+    const ReconciliationResult = require('../models/ReconciliationResult');
+    const reconciliation = await ReconciliationResult.findOne({ invoiceId: invoice._id });
+    
+    res.json({ invoice, reconciliation });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/invoices/:id/flag
+router.post('/:id/flag', auth, async (req, res) => {
+  try {
+    const invoice = await Invoice.findOneAndUpdate(
+      { _id: req.params.id, uploadedBy: req.user._id },
+      { isFlagged: true, notes: req.body.notes },
+      { new: true }
+    );
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    
+    await Notification.create({
+      userId: req.user._id,
+      type: 'warning',
+      message: `Invoice ${invoice.invoiceNumber} flagged for CA review.`
+    });
+    
+    res.json({ invoice });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/invoices/:id/remind
+router.post('/:id/remind', auth, async (req, res) => {
+  try {
+    const invoice = await Invoice.findOne({ _id: req.params.id, uploadedBy: req.user._id });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    
+    await Notification.create({
+      userId: req.user._id,
+      type: 'info',
+      message: `Reminder queued for supplier ${invoice.sellerGstin} on invoice ${invoice.invoiceNumber}`
+    });
+    
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
