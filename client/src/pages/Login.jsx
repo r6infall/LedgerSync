@@ -13,8 +13,8 @@ export default function Login() {
     e.preventDefault();
     setError(''); setLoading(true);
     try {
-      await login(form.email, form.password);
-      navigate('/dashboard');
+      const fetchedUser = await login(form.email, form.password);
+      navigate(`/${fetchedUser?.role || 'buyer'}/dashboard`);
     } catch (err) {
       // Firebase throws errors with a code and message
       let msg = 'Login failed. Please try again.';

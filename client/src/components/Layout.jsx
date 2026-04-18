@@ -5,14 +5,7 @@ import AIAdvisorPanel from './ui/AIAdvisorPanel';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
-  const { user, loading } = useAuth();
-
-  if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
-      <div className="spinner" />
-    </div>
-  );
-  if (!user) return <Navigate to="/login" replace />;
+  // Auth & loading are now strictly handled by PrivateRoute
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>

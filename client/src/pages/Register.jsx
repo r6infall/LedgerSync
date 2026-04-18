@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export default function Register() {
   const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', businessName: '', gstin: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', businessName: '', gstin: '', email: '', password: '', role: 'buyer' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [gstinStatus, setGstinStatus] = useState(''); // 'valid', 'invalid', ''
@@ -32,8 +32,8 @@ export default function Register() {
     }
     setError(''); setLoading(true);
     try {
-      await register({ ...form, gstin: form.gstin.toUpperCase() });
-      navigate('/dashboard');
+      const fetchedUser = await register({ ...form, gstin: form.gstin.toUpperCase() });
+      navigate(`/${fetchedUser?.role || 'buyer'}/dashboard`);
     } catch (err) {
       let msg = 'Registration failed. Please try again.';
       if (err.code === 'auth/email-already-in-use') {
@@ -50,8 +50,8 @@ export default function Register() {
   const handleGoogle = async () => {
     setError(''); setLoading(true);
     try {
-      await loginWithGoogle();
-      navigate('/dashboard');
+      const fetchedUser = await loginWithGoogle();
+      navigate(`/${fetchedUser?.role || 'buyer'}/dashboard`);
     } catch (err) {
       let msg = 'Google registration failed. Please try again.';
       if (err.code === 'auth/popup-closed-by-user') msg = '';
@@ -95,6 +95,17 @@ export default function Register() {
               style={inputStyle}
               onFocus={e => e.target.style.borderColor = '#B8935A'} onBlur={e => e.target.style.borderColor = '#E8E5E0'}
             />
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '11px', color: '#555', fontWeight: 500, marginBottom: '6px' }}>I am a</label>
+            <select
+              value={form.role} onChange={set('role')} required
+              style={{ ...inputStyle, cursor: 'pointer', appearance: 'auto' }}
+              onFocus={e => e.target.style.borderColor = '#B8935A'} onBlur={e => e.target.style.borderColor = '#E8E5E0'}
+            >
+              <option value="buyer">Buyer</option>
+              <option value="seller">Seller</option>
+            </select>
           </div>
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '11px', color: '#555', fontWeight: 500, marginBottom: '6px' }}>Business Name</label>
