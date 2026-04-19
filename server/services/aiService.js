@@ -13,7 +13,7 @@ if (process.env.REDIS_URL) {
   try {
     let rawUrl = process.env.REDIS_URL.trim();
     if (!rawUrl.startsWith('redis://') && !rawUrl.startsWith('rediss://')) {
-       rawUrl = `redis://${rawUrl}`;
+      rawUrl = `redis://${rawUrl}`;
     }
     redisClient = createClient({ url: rawUrl });
     redisClient.on('error', (err) => console.log('[Redis Error]', err.message));
@@ -36,7 +36,7 @@ let rateLimitInterval = setInterval(() => { apiCallsThisMinute = 0; }, 60000);
 
 async function enforceRateLimit() {
   if (apiCallsThisMinute >= RPM_LIMIT) {
-     throw new Error("Free tier AI limit reached (15 RPM). Please wait a moment.");
+    throw new Error("Free tier AI limit reached (15 RPM). Please wait a moment.");
   }
   apiCallsThisMinute++;
 }
@@ -58,10 +58,10 @@ async function withCache(cacheKey, aiFunction) {
   try {
     await enforceRateLimit();
     const result = await aiFunction();
-    
+
     // Save to Cache for 1 Hour (3600 secs)
     if (redisClient && redisClient.isReady && result) {
-      await redisClient.setEx(cacheKey, 3600, JSON.stringify(result)).catch(()=>null);
+      await redisClient.setEx(cacheKey, 3600, JSON.stringify(result)).catch(() => null);
     }
     return result;
   } catch (err) {
@@ -76,7 +76,7 @@ async function withCache(cacheKey, aiFunction) {
 exports.explainMismatch = async (invoice, gstr2aRecord) => {
   if (!genAI) return { error: "AI not configured." };
   const cacheKey = `ai:mismatch:${invoice._id}`;
-  
+
   return withCache(cacheKey, async () => {
     const prompt = `You are a GST compliance expert for Indian SMBs. A buyer's purchase invoice does not match what their supplier filed with the government (GSTR-2A). Analyze the mismatch and explain it in plain English.
 
@@ -105,7 +105,7 @@ Respond in this exact JSON format natively (no markdown ticks):
 exports.suggestCorrection = async (invoice, mismatchType) => {
   if (!genAI) return { error: "AI not configured." };
   const cacheKey = `ai:correction:${invoice._id}:${mismatchType}`;
-  
+
   return withCache(cacheKey, async () => {
     const prompt = `You are a GST filing assistant. Generate a step-by-step correction plan for this mismatch type: ${mismatchType}.
 Invoice details: Invoice ${invoice.invoiceNumber}, Date: ${invoice.invoiceDate}, Amount: ${invoice.totalAmount}
@@ -126,11 +126,11 @@ Format output strictly as JSON array of strings: ["Step 1...", "Step 2..."]`;
 exports.scoreSupplierRisk = async (supplierId, supplierGstin, invoices) => {
   if (!genAI) return { error: "AI not configured." };
   const cacheKey = `ai:supplier_risk:${supplierGstin}`;
-  
+
   return withCache(cacheKey, async () => {
     // Trim payload strictly to save context tokens explicitly
     const trimmed = invoices.slice(0, 30).map(i => ({ status: i.status, amount: i.totalAmount, date: i.invoiceDate }));
-    
+
     const prompt = `You are a procurement risk analyst. Analyze this supplier's invoice history and calculate a risk score.
 Supplier GSTIN: ${supplierGstin}
 Invoice history (last 30 docs): ${JSON.stringify(trimmed)}
@@ -155,12 +155,12 @@ Return explicitly in this JSON format strictly (no markdown blocks):
 // ----------------------------------------------------------------------
 exports.chatWithContext = async (userMessage, contextData) => {
   if (!genAI) return { response: "AI correctly disabled for this instance without API key configuration." };
-  
+
   // Note: Chat normally shouldn't be heavily cached for dynamic interaction natively, but for the exact query yes.
   const cacheKey = `ai:chat:${contextData.userId}:${userMessage.substring(0, 40).replace(/\\s/g, '_')}`;
-  
+
   return withCache(cacheKey, async () => {
-    const prompt = `You are TaxSync, an AI assistant for Indian GST compliance. You are talking to a user at ${contextData.businessName} (GSTIN: ${contextData.gstin}).
+    const prompt = `You are LedgerSync, an AI assistant for Indian GST compliance. You are talking to a user at ${contextData.businessName} (GSTIN: ${contextData.gstin}).
 Their current data:
 - Total invoices this month: ${contextData.totalInvoices}
 - Matched: ${contextData.matchedCount}, Mismatched: ${contextData.mismatchCount}, Missing: ${contextData.missingCount}
@@ -184,7 +184,7 @@ Return just the raw text response seamlessly.`;
 exports.generateGSTRSummary = async (contextData) => {
   if (!genAI) return { error: "AI not configured." };
   const cacheKey = `ai:gstr_summary:${contextData.userId}`;
-  
+
   return withCache(cacheKey, async () => {
     const prompt = `You are a CA assistant summarizing GST filing readiness for a client. Write a 3-paragraph summary in plain English.
 Client: ${contextData.businessName}, GSTIN: ${contextData.gstin}
@@ -209,7 +209,7 @@ Format specifically as JSON containing 3 exact paragraphs strings securely (no m
 // ----------------------------------------------------------------------
 exports.generateSmartReminder = async (userName, businessName, pendingActions) => {
   if (!genAI) return { response: "Please resolve outstanding compliance metrics explicitly." };
-  
+
   const cacheKey = `ai:reminder:${userName}:${new Date().toDateString()}`;
   return withCache(cacheKey, async () => {
     const prompt = `Generate a WhatsApp-style short reminder message (max 60 words) for a GST filer.
@@ -230,7 +230,7 @@ The message must: mention specific rupee amounts, name specific suppliers causin
 exports.detectAnomalies = async (userId, invoices) => {
   if (!genAI) return [];
   const cacheKey = `ai:anomalies:${userId}`;
-  
+
   return withCache(cacheKey, async () => {
     const trimmed = invoices.slice(0, 50).map(i => ({
       _id: String(i._id),
@@ -240,7 +240,7 @@ exports.detectAnomalies = async (userId, invoices) => {
       invoiceNumber: i.invoiceNumber,
       supplierName: i.sellerGstin
     }));
-    
+
     const prompt = `You are a financial fraud detection AI for an Indian GST compliance platform. You have been given a dataset of purchase invoices. Analyze the ENTIRE dataset freely using your own expertise. Identify ANY anomalies, risks, or suspicious patterns you can find. Use your own judgement — do not limit yourself to any pre-defined checklist.
 
 Invoice dataset:
@@ -275,7 +275,7 @@ If no anomalies are found, return an empty array: []`;
 exports.explainComplianceScore = async (score, missing, mismatches) => {
   if (!genAI) return { error: "AI not configured." };
   const cacheKey = `ai:compliance_explain:${score}:${missing}:${mismatches}`;
-  
+
   return withCache(cacheKey, async () => {
     const prompt = `Explain this GST compliance score to a non-accountant in plain English.
 Score: ${score}/100
@@ -301,7 +301,7 @@ Write specifically natively structured as JSON without markdown wrappers:
 exports.forecastITC = async (userId, currentITC, blockedITC) => {
   if (!genAI) return { error: "AI not configured." };
   const cacheKey = `ai:forecast:${userId}`;
-  
+
   return withCache(cacheKey, async () => {
     const prompt = `You are a financial forecasting AI. Predict next month's Input Tax Credit.
 Current month ITC eligible: ₹${currentITC}, ITC blocked: ₹${blockedITC}
@@ -327,7 +327,7 @@ Output valid JSON natively securely (no markdown block):
 exports.onboardingGuide = async (businessName, role, gstin) => {
   if (!genAI) return { error: "AI not configured." };
   const cacheKey = `ai:onboarding:${role}`;
-  
+
   return withCache(cacheKey, async () => {
     const prompt = `Create a 5-step onboarding checklist for a new GST compliance platform user.
 Business: ${businessName}, Role: ${role}, GSTIN: ${gstin}
@@ -356,7 +356,7 @@ exports.reconcileInvoicesAI = async (userId, purchaseInvoices, gstr2aInvoices) =
   // on active matching and data mutation. A separate cache key conceptually works but isn't required here.
 
   await enforceRateLimit();
-  
+
   // Trim schemas to minimize prompt tokens and maximize reasoning window
   const pList = purchaseInvoices.map(i => ({ _id: i._id, num: i.invoiceNumber, amount: i.totalAmount, gstin: i.sellerGstin }));
   const gList = gstr2aInvoices.map(i => ({ _id: i._id, num: i.invoiceNumber, amount: i.totalAmount, gstin: i.sellerGstin }));
@@ -398,7 +398,7 @@ Output strictly as raw valid JSON without markdown block tokens explicitly:
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (jsonMatch) raw = jsonMatch[0];
     return JSON.parse(raw);
-  } catch(e) {
+  } catch (e) {
     console.error("[Reconciliation Engine AI Fallback Error]:", e.message);
     return { error: 'Reconciliation AI dynamically failed: ' + e.message };
   }

@@ -3,7 +3,7 @@ import Card from '../../components/ui/Card';
 import api from '../../services/api';
 
 export default function BuyerAIChat() {
-  const [messages, setMessages] = useState([{ role: 'ai', text: 'Hi! I am TaxSync, your AI assistant for Indian GST compliance. How can I help you today?', timestamp: new Date() }]);
+  const [messages, setMessages] = useState([{ role: 'ai', text: 'Hi! I am LedgerSync, your AI assistant for Indian GST compliance. How can I help you today?', timestamp: new Date() }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +34,7 @@ export default function BuyerAIChat() {
   return (
     <div style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
       <h2 style={{ fontSize: '20px', marginBottom: '16px', color: '#1A1A1A', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        TaxSync Assistant 
+        LedgerSync Assistant 
         <span className="ai-badge" style={{background:'#F3E8FF', color:'#7E22CE', padding:'4px 8px', borderRadius:'12px', fontSize:'11px', fontWeight:'600'}}>✨ AI-powered (Gemini 1.5 Flash)</span>
       </h2>
 
@@ -52,7 +52,7 @@ export default function BuyerAIChat() {
           {messages.map((msg, i) => (
             <div key={i} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
               <div style={{ background: msg.role === 'user' ? '#1A1A1A' : '#F3E8FF', color: msg.role === 'user' ? '#FFF' : '#1A1A1A', padding: '12px 16px', borderRadius: '12px', borderBottomRightRadius: msg.role === 'user' ? '4px' : '12px', borderBottomLeftRadius: msg.role === 'ai' ? '4px' : '12px', fontSize: '14px', lineHeight: '1.5' }}>
-                {msg.role === 'ai' && <strong style={{color: '#7E22CE', display: 'block', marginBottom: '4px', fontSize: '12px'}}>🤖 TaxSync</strong>}
+                {msg.role === 'ai' && <strong style={{color: '#7E22CE', display: 'block', marginBottom: '4px', fontSize: '12px'}}>🤖 LedgerSync</strong>}
                 {msg.text}
               </div>
               <div style={{ fontSize: '11px', color: '#999', marginTop: '4px', textAlign: msg.role === 'user' ? 'right' : 'left' }}>
