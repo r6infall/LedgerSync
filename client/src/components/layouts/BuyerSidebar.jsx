@@ -9,7 +9,8 @@ const ITEMS = [
   { to: '/buyer/missing', label: 'Missing Logs' },
   { to: '/buyer/notifications', label: 'Notifications' },
   { to: '/buyer/ai-chat', label: 'AI Chat' },
-  { to: '/buyer/compliance', label: 'Compliance Score' }
+  { to: '/buyer/compliance', label: 'Compliance Score' },
+  { to: '/buyer/ai-features', label: '✨ AI Features' }
 ];
 
 export default function BuyerSidebar() {

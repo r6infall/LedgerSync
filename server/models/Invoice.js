@@ -11,7 +11,7 @@ const invoiceSchema = new mongoose.Schema({
   hsnCode: { type: String, trim: true },
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'rejected', 'mismatch', 'matched', 'missing', 'approved', 'change_requested', 'under_review', 'extra'],
+    enum: ['pending', 'accepted', 'rejected', 'mismatch', 'matched', 'missing', 'approved', 'change_requested', 'under_review', 'extra', 'paid'],
     default: 'pending'
   },
   source: {

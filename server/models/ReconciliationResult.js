@@ -14,6 +14,7 @@ const reconciliationResultSchema = new mongoose.Schema({
   confidenceScore: { type: Number, min: 0, max: 100, default: 0 },
   matchedWith: { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice', default: null },
   remarks: { type: String, trim: true },
+  aiAnalysis: { type: mongoose.Schema.Types.Mixed },
   engineVersion: { type: String, default: '2.0' },
   createdAt: { type: Date, default: Date.now }
 });

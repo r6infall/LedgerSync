@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema({
   gstin: { type: String, trim: true, uppercase: true },
   businessName: { type: String, trim: true },
   role: { type: String, enum: ['buyer', 'seller'], default: 'buyer' },
+  aiSupplierRisk: { type: mongoose.Schema.Types.Mixed },
+  aiForecast: { type: mongoose.Schema.Types.Mixed },
   createdAt: { type: Date, default: Date.now }
 });
 

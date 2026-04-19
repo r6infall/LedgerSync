@@ -32,6 +32,8 @@ import SellerNotifications from './pages/seller/SellerNotifications';
 import SellerPayments from './pages/seller/SellerPayments';
 
 import AboutData from './pages/AboutData';
+import AIFeatures from './pages/AIFeatures';
+import HowItWorks from './pages/HowItWorks';
 
 export default function App() {
   return (
@@ -43,6 +45,8 @@ export default function App() {
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/about-data" element={<AboutData />} />
+          <Route path="/ai-features" element={<AIFeatures />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
 
           {/* Protected Area */}
           <Route element={<PrivateRoute />}>

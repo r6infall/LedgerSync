@@ -7,8 +7,10 @@ const Notification = require('../models/Notification');
 router.get('/kpis', auth, async (req, res) => {
   try {
     const userId = req.user._id;
+    const userRole = req.user.role || 'buyer';
+    const sourceQuery = userRole === 'seller' ? 'gstr2a' : 'purchase';
 
-    const purchaseInvoices = await Invoice.find({ uploadedBy: userId, source: 'purchase' });
+    const purchaseInvoices = await Invoice.find({ uploadedBy: userId, source: sourceQuery });
     const totalInvoices = purchaseInvoices.length;
 
     let matchedCount = 0;

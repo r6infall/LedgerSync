@@ -56,6 +56,23 @@ export default function Landing() {
           <span style={{ fontWeight: 700, fontSize: 15, color: '#B8935A', letterSpacing: '-0.3px' }}>AI</span>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Link to="/how-it-works" style={{
+            padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+            color: '#1A1A1A', background: 'transparent',
+            textDecoration: 'none', transition: 'all 0.15s', display: 'flex', alignItems: 'center', marginRight: '4px'
+          }}
+            onMouseOver={e => e.currentTarget.style.color = '#B8935A'}
+            onMouseOut={e => e.currentTarget.style.color = '#1A1A1A'}
+          >
+            How it works
+          </Link>
+          <Link to="/ai-features" style={{
+            padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+            color: '#7E22CE', background: '#F3E8FF', border: '1px solid #E9D5FF',
+            textDecoration: 'none', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '6px', marginRight: '8px'
+          }}>
+            <span>✨</span> See AI in action
+          </Link>
           <Link to="/login" style={{
             padding: '6px 14px', borderRadius: 5, fontSize: 12, fontWeight: 500,
             color: '#1A1A1A', background: '#FFFFFF', border: '1px solid #E8E5E0',

@@ -1,1 +1,2 @@
-import Card from '../../components/ui/Card'; export default function SellerNotifications() { return <Card title="SellerNotifications"><p>Under construction based on new role-specific architecture.</p></Card>; }
+// Re-export buyer notifications — same page works for both portals
+export { default } from '../buyer/BuyerNotifications';

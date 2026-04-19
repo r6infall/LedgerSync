@@ -1,6 +1,6 @@
 import MockBadge from './MockBadge';
 
-export default function Card({ title, children, showMockBadge = true, style }) {
+export default function Card({ title, children, showMockBadge = false, style }) {
   return (
     <div style={{
       background: '#FFFFFF',

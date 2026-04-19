@@ -34,6 +34,8 @@ export default function StatusTimeline({ history = [] }) {
     if (status === 'extra') return 'Extra Invoice Found';
     if (status === 'itc-unlocked') return 'ITC unlocked';
     if (status === 'change-requested') return 'Change requested';
+    if (status === 'paid') return 'Payment confirmed';
+    if (status === 'overdue') return 'Payment overdue';
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
