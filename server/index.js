@@ -51,9 +51,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 LedgerSync server running on http://localhost:${PORT}`);
-});
+// BEFORE
+app.listen(5000, () => console.log('Server running on port 5000'));
+
+// AFTER — export for Vercel, keep listen for local dev
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(5000, () => console.log('Server running on port 5000'));
+}
 
 module.exports = app;
 
