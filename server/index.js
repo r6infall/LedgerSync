@@ -52,12 +52,9 @@ app.use((err, req, res, next) => {
 });
 
 // BEFORE
-app.listen(5000, () => console.log('Server running on port 5000'));
-
-// AFTER — export for Vercel, keep listen for local dev
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(5000, () => console.log('Server running on port 5000'));
-}
+app.listen(PORT, () => {
+  console.log(`🚀 LedgerSync server running on http://localhost:${PORT}`);
+});
 
 module.exports = app;
 
