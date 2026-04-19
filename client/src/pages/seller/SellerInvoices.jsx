@@ -19,15 +19,46 @@ export default function SellerInvoices() {
     }
   };
 
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this invoice?')) return;
+    try {
+      await api.delete(`/invoices/${id}`);
+      fetchInvoices();
+    } catch (err) {
+      alert('Failed to delete invoice');
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm('Are you sure you want to delete ALL invoices? This action cannot be undone.')) return;
+    try {
+      await api.delete('/invoices/all');
+      fetchInvoices();
+    } catch (err) {
+      alert('Failed to delete all invoices');
+    }
+  };
+
   useEffect(() => { fetchInvoices(); }, []);
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '20px', color: '#1A1A1A', margin: 0 }}>Filed Sales Returns</h2>
-        <button onClick={() => navigate('/seller/upload')} style={{ background: '#1A1A1A', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}>
-          + Submit Returns
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {invoices.length > 0 && (
+            <button 
+              onClick={handleDeleteAll} 
+              style={{ background: 'none', color: '#C0392B', border: '1px solid #F5C6CB', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}
+            >
+              Delete All
+            </button>
+          )}
+          <button onClick={() => navigate('/seller/upload')} style={{ background: '#1A1A1A', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}>
+            + Submit Returns
+          </button>
+        </div>
       </div>
 
       <Card showMockBadge={true}>
@@ -49,6 +80,7 @@ export default function SellerInvoices() {
                   <th style={{ padding: '12px 16px', fontWeight: 600 }}>Taxable</th>
                   <th style={{ padding: '12px 16px', fontWeight: 600 }}>Total</th>
                   <th style={{ padding: '12px 16px', fontWeight: 600 }}>Approval Status</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, textAlign: 'right' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -67,6 +99,14 @@ export default function SellerInvoices() {
                       }}>
                         {inv.status.replace('_', ' ')}
                       </span>
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <button 
+                        onClick={(e) => handleDelete(inv._id, e)} 
+                        style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: '18px', padding: '4px 8px' }}
+                      >
+                        &times;
+                      </button>
                     </td>
                   </tr>
                 ))}

@@ -10,7 +10,6 @@ const ITEMS = [
   { to: '/buyer/notifications', label: 'Notifications' },
   { to: '/buyer/ai-chat', label: 'AI Chat' },
   { to: '/buyer/compliance', label: 'Compliance Score' },
-  { to: '/buyer/ai-features', label: '✨ AI Features' }
 ];
 
 export default function BuyerSidebar() {
@@ -19,7 +18,7 @@ export default function BuyerSidebar() {
       <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.8px', color: '#999', marginBottom: '16px', paddingLeft: '12px', fontWeight: 600 }}>Buyer Nav</div>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {ITEMS.map(i => (
-          <NavLink key={i.to} to={i.to} style={({isActive}) => ({
+          <NavLink key={i.to} to={i.to} style={({ isActive }) => ({
             padding: '8px 12px', borderRadius: '6px', textDecoration: 'none', fontSize: '12px', fontWeight: isActive ? 600 : 500,
             color: isActive ? '#1A1A1A' : '#555', background: isActive ? '#E8E5E0' : 'transparent', transition: 'all 0.2s'
           })}>

@@ -56,12 +56,33 @@ export default function BuyerInvoices() {
     }
   };
 
+  const handleDeleteOne = async (e, id, invNumber) => {
+    e.stopPropagation(); // Don't navigate to detail
+    if (!window.confirm(`Delete invoice ${invNumber}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/invoices/${id}`);
+      setInvoices(prev => prev.filter(i => i._id !== id));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete invoice');
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm(`Delete ALL ${invoices.length} purchase invoices? This cannot be undone.`)) return;
+    try {
+      await api.delete('/invoices/all');
+      setInvoices([]);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to clear invoices');
+    }
+  };
+
   const downloadSample = () => {
     const csvContent = "data:text/csv;charset=utf-8," + 
     "Invoice Number,Supplier GSTIN,Buyer GSTIN,Invoice Date,Taxable Amount,GST Amount\n" +
-    "INV-001,29AAAGM0289C1ZF,27ABCDE1234F1Z5,2025-04-10,100000,18000\n" +
-    "INV-002,29AAAGM0289C1ZF,27ABCDE1234F1Z5,2025-04-11,50000,9000\n" +
-    "INV-MISSING,29AAAGM0289C1ZF,27ABCDE1234F1Z5,2025-04-12,75000,13500";
+    "INV-001,33QWERT9876H2Z7,07LMNOP4321K1Z2,2025-04-10,100000,18000\n" +
+    "INV-002,33QWERT9876H2Z7,07LMNOP4321K1Z2,2025-04-11,50000,9000\n" +
+    "INV-003,33QWERT9876H2Z7,07LMNOP4321K1Z2,2025-04-12,75000,13500";
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -77,6 +98,11 @@ export default function BuyerInvoices() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '20px', color: '#1A1A1A', margin: 0 }}>Purchase Registry</h2>
         <div style={{ display: 'flex', gap: '12px' }}>
+          {invoices.length > 0 && (
+            <button onClick={handleDeleteAll} style={{ background: '#FFF', color: '#C0392B', border: '1px solid #C0392B', padding: '10px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', fontWeight: 500 }}>
+              🗑 Clear All
+            </button>
+          )}
           <button onClick={downloadSample} style={{ background: '#FFF', color: '#1A1A1A', border: '1px solid #1A1A1A', padding: '10px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', fontWeight: 500 }}>
             Download Sample CSV
           </button>
@@ -107,8 +133,8 @@ export default function BuyerInvoices() {
           <div style={{ padding: '40px', textAlign: 'center', color: '#999', fontSize: '14px' }}>Loading records...</div>
         ) : invoices.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: '#999', fontSize: '14px' }}>
-            No purchase invoices found in your localized registry.<br/><br/>
-            Use the <strong>Upload Purchase Data</strong> button securely mapped above to natively populate your registry cleanly.
+            No purchase invoices found.<br/><br/>
+            Use the <strong>Upload Purchase Data</strong> button above to populate your registry.
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -121,6 +147,7 @@ export default function BuyerInvoices() {
                   <th style={{ padding: '12px 16px', fontWeight: 600 }}>Taxable</th>
                   <th style={{ padding: '12px 16px', fontWeight: 600 }}>Total</th>
                   <th style={{ padding: '12px 16px', fontWeight: 600 }}>Status</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, width: '50px' }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -147,6 +174,17 @@ export default function BuyerInvoices() {
                         {inv.status.replace('_', ' ')}
                       </span>
                     </td>
+                    <td style={{ padding: '16px', textAlign: 'center' }}>
+                      <button
+                        onClick={(e) => handleDeleteOne(e, inv._id, inv.invoiceNumber)}
+                        title="Delete invoice"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#C0392B', opacity: 0.5, transition: 'opacity 0.2s' }}
+                        onMouseOver={e => e.currentTarget.style.opacity = 1}
+                        onMouseOut={e => e.currentTarget.style.opacity = 0.5}
+                      >
+                        🗑
+                      </button>
+                    </td>
                   </tr>
                 )})}
               </tbody>
@@ -157,3 +195,4 @@ export default function BuyerInvoices() {
     </div>
   );
 }
+

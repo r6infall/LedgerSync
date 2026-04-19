@@ -37,9 +37,9 @@ export default function SellerUpload() {
   const downloadSample = () => {
     const csvContent = "data:text/csv;charset=utf-8," + 
     "Invoice Number,Supplier GSTIN,Buyer GSTIN,Invoice Date,Taxable Amount,GST Amount\n" +
-    "INV-001,29AAAGM0289C1ZF,27ABCDE1234F1Z5,2025-04-10,100000,18000\n" +
-    "INV-002,29AAAGM0289C1ZF,27ABCDE1234F1Z5,2025-04-11,50000,10000\n" + 
-    "INV-EXTRA,29AAAGM0289C1ZF,27ABCDE1234F1Z5,2025-04-13,65000,11700";
+    "INV-001,33QWERT9876H2Z7,07LMNOP4321K1Z2,2025-04-10,100000,18000\n" +
+    "INV-002,33QWERT9876H2Z7,07LMNOP4321K1Z2,2025-04-11,50000,10000\n" + 
+    "INV-EXTRA,33QWERT9876H2Z7,07LMNOP4321K1Z2,2025-04-13,65000,11700";
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");

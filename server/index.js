@@ -56,3 +56,5 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
+// Triggering restart

@@ -51,6 +51,16 @@ export default function InvoiceDetail() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/invoices/${id}`);
+      navigate('/invoices');
+    } catch (err) {
+      alert('Failed to delete invoice');
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ padding: 24 }}>
@@ -143,6 +153,9 @@ export default function InvoiceDetail() {
         </Button>
         <Button variant="primary" onClick={() => setShowFlagNotes(!showFlagNotes)}>
           Flag for CA Review
+        </Button>
+        <Button variant="secondary" onClick={handleDelete} style={{ color: '#C0392B', borderColor: '#F5C6CB' }}>
+          Delete Invoice
         </Button>
         {(invoice.status === 'mismatch' || invoice.status === 'missing') && (
           <button style={{

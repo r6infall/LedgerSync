@@ -154,14 +154,16 @@ router.post('/upload/:source', auth, upload.single('file'), async (req, res) => 
 // DELETE /api/invoices/all — clear all invoices for user
 router.delete('/all', auth, async (req, res) => {
   try {
+    const userInvoices = await Invoice.find({ uploadedBy: req.user._id }, '_id');
+    const invoiceIds = userInvoices.map(inv => inv._id);
+
     await Invoice.deleteMany({ uploadedBy: req.user._id });
+    
     const ReconciliationResult = require('../models/ReconciliationResult');
     if (ReconciliationResult) {
-      await ReconciliationResult.deleteMany({}); // Delete all for this user, but wait, schema might not have uploadedBy.
-      // Wait, let's just delete all or delete where invoiceId is in user's invoices.
-      // If we just deleted the invoices, we can't find their IDs.
-      // Let's just delete all ReconciliationResults because this is a single user prototype.
+      await ReconciliationResult.deleteMany({ invoiceId: { $in: invoiceIds } });
     }
+    
     res.json({ message: 'All invoices cleared successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });

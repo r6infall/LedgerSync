@@ -45,6 +45,19 @@ export default function SellerInvoiceDetail() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return;
+    setActionLoading(true);
+    try {
+      await api.delete(`/invoices/${id}`);
+      navigate('/seller/invoices');
+    } catch (err) {
+      alert('Failed to delete invoice');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) return <div>Loading invoice details...</div>;
   if (!invoice) return <div>Invoice not found.</div>;
 
@@ -58,9 +71,18 @@ export default function SellerInvoiceDetail() {
   return (
     <div style={{ position: 'relative' }}>
       <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: '#B8935A', cursor: 'pointer', marginBottom: '16px', fontWeight: 500, fontSize: '14px' }}>← Back to Invoices</button>
-      <h2 style={{ fontSize: '20px', marginBottom: '24px', color: '#1A1A1A' }}>
-        Invoice Detail <span style={{fontSize:'14px', color:'#555', fontWeight: 500}}>#{invoice.invoiceNumber}</span>
-      </h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '20px', color: '#1A1A1A', margin: 0 }}>
+          Invoice Detail <span style={{fontSize:'14px', color:'#555', fontWeight: 500}}>#{invoice.invoiceNumber}</span>
+        </h2>
+        <button 
+          disabled={actionLoading} 
+          onClick={handleDelete} 
+          style={{ background: 'none', color: '#C0392B', border: '1px solid #F5C6CB', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: actionLoading ? 'not-allowed' : 'pointer', fontWeight: 600 }}
+        >
+          Delete Invoice
+        </button>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
          <div>
