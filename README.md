@@ -3,7 +3,7 @@
 
 LedgerSync is an intelligent B2B platform designed to automate GST reconciliation, eliminating the manual friction between buyers and sellers in India. By leveraging deterministic algorithms alongside Google's Gemini 1.5 Flash AI, LedgerSync analyzes invoices, flags anomalies, matches records flexibly, and translates complex tax mismatches into plain-English actionable insights.
 
-![LedgerSync Overview](client/public/favicon.ico) *A streamlined, modern experience built for speed and precision.*
+*A streamlined, modern experience built for speed and precision.*
 
 ---
 
