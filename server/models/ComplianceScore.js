@@ -13,6 +13,8 @@ const complianceScoreSchema = new mongoose.Schema({
   itcAtRisk: { type: Number, default: 0 },
   mismatches: { type: Number, default: 0 },
   pendingInvoices: { type: Number, default: 0 },
+  aiExplanation: { type: mongoose.Schema.Types.Mixed },
+  aiGstrSummary: { type: mongoose.Schema.Types.Mixed },
   calculatedAt: { type: Date, default: Date.now }
 });
 

@@ -15,7 +15,7 @@ router.post('/sync', async (req, res) => {
     const token = authHeader.split(' ')[1];
     const decodedToken = await admin.auth().verifyIdToken(token);
 
-    const { name, email, gstin, businessName } = req.body;
+    const { name, email, gstin, businessName, role } = req.body;
 
     const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     if (gstin && !gstinRegex.test(gstin)) {
@@ -24,24 +24,35 @@ router.post('/sync', async (req, res) => {
 
     let user = await User.findOne({ firebaseUid: decodedToken.uid });
     
+    if (!user && (decodedToken.email || email)) {
+      user = await User.findOne({ email: decodedToken.email || email });
+    }
+
+    let isNewUser = false;
+    
     if (user) {
-      // Update existing
+      // Update existing or mapped email legacy accounts
+      if (!user.firebaseUid) {
+        user.firebaseUid = decodedToken.uid;
+      }
       user.name = name || user.name;
       user.gstin = gstin || user.gstin;
       user.businessName = businessName || user.businessName;
       await user.save();
     } else {
+      isNewUser = true;
       // Create new
       user = await User.create({
         firebaseUid: decodedToken.uid,
         email: decodedToken.email || email,
         name,
         gstin,
-        businessName
+        businessName,
+        role: role || 'buyer'
       });
     }
 
-    res.status(200).json({ user });
+    res.status(200).json({ user, isNewUser });
   } catch (err) {
     console.error('Sync Error:', err);
     res.status(500).json({ error: err.message });
@@ -52,6 +63,35 @@ router.post('/sync', async (req, res) => {
 // Still use standard middleware to fetch current user
 router.get('/me', require('../middleware/auth'), (req, res) => {
   res.json({ user: req.user });
+});
+
+// PUT /api/auth/profile
+// Modifies authenticated user's profile variables like role
+router.put('/profile', require('../middleware/auth'), async (req, res) => {
+  try {
+    const { role, name, businessName, gstin } = req.body;
+    let user = req.user;
+    
+    if (role && ['buyer', 'seller'].includes(role)) {
+      user.role = role;
+    }
+    if (name) user.name = name;
+    if (businessName !== undefined) user.businessName = businessName;
+    
+    if (gstin !== undefined) {
+      const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (gstin && !gstinRegex.test(gstin.toUpperCase())) {
+        return res.status(400).json({ error: "Invalid GSTIN format. Example: 27AAPFU0939F1ZV" });
+      }
+      user.gstin = gstin ? gstin.toUpperCase() : '';
+    }
+
+    await user.save();
+    res.json({ user });
+  } catch (err) {
+    console.error('Profile Update Error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

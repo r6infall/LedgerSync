@@ -107,8 +107,8 @@ export default function Reconciliation() {
     setRunning(true);
     try {
       const res = await api.post('/reconciliation/run');
-      const s = res.data.summary;
-      setToast({ msg: `Done: ${s.matched} matched · ${s.mismatches} mismatches · ${s.missing} missing`, type: 'success' });
+      const s = res.data.stats || res.data.summary?.stats || {};
+      setToast({ msg: `Done: ${s.matched || 0} matched · ${s.mismatch || 0} mismatches · ${s.missing || 0} missing`, type: 'success' });
       setTimeout(() => setToast({ msg: '', type: '' }), 5000);
       fetchResults();
     } catch (err) {

@@ -11,7 +11,7 @@ const invoiceSchema = new mongoose.Schema({
   hsnCode: { type: String, trim: true },
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'rejected', 'mismatch', 'matched', 'missing'],
+    enum: ['pending', 'accepted', 'rejected', 'mismatch', 'matched', 'missing', 'approved', 'change_requested', 'under_review', 'extra', 'paid'],
     default: 'pending'
   },
   source: {
@@ -19,6 +19,13 @@ const invoiceSchema = new mongoose.Schema({
     enum: ['purchase', 'gstr2a'],
     required: true
   },
+  statusHistory: [{
+    status: { type: String },
+    actor: { type: String },
+    actorRole: { type: String },
+    note: { type: String },
+    timestamp: { type: Date, default: Date.now }
+  }],
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   isFlagged: { type: Boolean, default: false },
   notes: { type: String, trim: true },

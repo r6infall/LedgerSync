@@ -4,89 +4,126 @@ const auth = require('../middleware/auth');
 const Payment = require('../models/Payment');
 const Invoice = require('../models/Invoice');
 const Notification = require('../models/Notification');
+const ComplianceScore = require('../models/ComplianceScore');
+const crypto = require('crypto');
 
-// POST /api/payments/create — mock order creation
-router.post('/create', auth, async (req, res) => {
+// POST /api/payments/mock-confirm — simulate Razorpay payment confirmation
+router.post('/mock-confirm', auth, async (req, res) => {
   try {
-    const { invoiceId, amount, supplierGstin } = req.body;
+    const { invoiceId, transactionId, amount, mockSignature, paymentMethod } = req.body;
 
     const invoice = await Invoice.findOne({ _id: invoiceId, uploadedBy: req.user._id });
     if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
 
-    // Mock Razorpay order id
-    const mockOrderId = `order_mock_${Date.now()}`;
+    // Check for duplicate payment
+    const existing = await Payment.findOne({ invoiceId, status: 'paid' });
+    if (existing) return res.status(400).json({ error: 'Invoice already paid', payment: existing });
+
+    const itcAmount = invoice.gstAmount || 0;
+    const now = new Date();
 
     const payment = await Payment.create({
       invoiceId,
-      supplierId: req.user._id, // Just storing the current user for reference in test mode
+      buyerId: req.user._id,
       amount,
-      razorpayOrderId: mockOrderId,
-      status: 'pending'
+      transactionId,
+      mockSignature,
+      status: 'paid',
+      paymentMethod: paymentMethod || 'mock_upi',
+      itcUnlocked: true,
+      itcAmount,
+      paidAt: now,
+      timeline: [
+        { event: 'payment_initiated', actor: 'Buyer', timestamp: new Date(now - 3000), note: 'Buyer initiated mock payment' },
+        { event: 'payment_processing', actor: 'System', timestamp: new Date(now - 1000), note: 'Simulated 2s processing delay' },
+        { event: 'payment_confirmed', actor: 'System', timestamp: now, note: `Transaction: ${transactionId}` },
+        { event: 'itc_unlocked', actor: 'System', timestamp: now, note: `₹${itcAmount.toLocaleString('en-IN')} now claimable` }
+      ]
     });
 
-    res.json({
-      orderId: mockOrderId,
-      amount: amount * 100,
-      currency: 'INR',
-      paymentId: payment._id,
-      keyId: 'rzp_test_mock_key_123'
+    // Update invoice status and push timeline entries
+    await Invoice.findByIdAndUpdate(invoiceId, {
+      status: 'paid',
+      $push: {
+        statusHistory: {
+          $each: [
+            { status: 'paid', actor: 'Buyer', actorRole: 'Buyer', note: `Payment confirmed (mock) — ₹${amount.toLocaleString('en-IN')} — Transaction: ${transactionId}`, timestamp: now },
+            { status: 'itc-unlocked', actor: 'System', actorRole: 'System', note: `ITC of ₹${itcAmount.toLocaleString('en-IN')} unlocked after payment confirmation`, timestamp: now }
+          ]
+        }
+      }
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
-// POST /api/payments/verify — mock verification
-router.post('/verify', auth, async (req, res) => {
-  try {
-    const { razorpayOrderId, razorpayPaymentId, invoiceId } = req.body;
-
-    // In a real app we verify razorpaySignature here
-    // For mock, we just assume it's valid if it reaches here
-
-    const invoice = await Invoice.findOne({ _id: invoiceId, uploadedBy: req.user._id });
-    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-
-    const itcUnlocked = invoice.gstAmount || 0;
-
-    const payment = await Payment.findOneAndUpdate(
-      { invoiceId, status: 'pending' },
-      {
-        razorpayPaymentId: razorpayPaymentId || `pay_mock_${Date.now()}`,
-        status: 'completed',
-        itcUnlocked
-      },
-      { new: true }
-    );
-
-    // Update invoice status so it contributes to matched/ITC
-    await Invoice.findByIdAndUpdate(invoiceId, { status: 'matched' });
-
+    // Create notification
     await Notification.create({
       userId: req.user._id,
-      message: `Payment of ₹${invoice.taxableAmount.toLocaleString('en-IN')} complete. ₹${itcUnlocked.toLocaleString('en-IN')} ITC unlocked for invoice ${invoice.invoiceNumber}.`,
+      message: `Mock payment of ₹${amount.toLocaleString('en-IN')} confirmed for Invoice ${invoice.invoiceNumber}. ITC of ₹${itcAmount.toLocaleString('en-IN')} is now unlocked. Transaction: ${transactionId}`,
       type: 'success'
     });
 
-    res.json({ success: true, payment, itcUnlocked });
+    res.json({ success: true, payment, itcAmount });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/payments/history
-router.get('/history', auth, async (req, res) => {
+// GET /api/payments/buyer — buyer's payment history
+router.get('/buyer', auth, async (req, res) => {
   try {
-    const payments = await Payment.find({ supplierId: req.user._id })
+    const payments = await Payment.find({ buyerId: req.user._id })
       .populate('invoiceId')
       .sort({ createdAt: -1 });
 
-    const pendingInvoices = await Invoice.find({ 
-      uploadedBy: req.user._id, 
-      status: { $in: ['mismatch', 'missing'] } 
+    // Find invoices that are payable but not yet paid
+    const paidInvoiceIds = payments.filter(p => p.status === 'paid').map(p => p.invoiceId?._id?.toString());
+    const payableInvoices = await Invoice.find({
+      uploadedBy: req.user._id,
+      status: { $in: ['matched', 'approved'] },
+      _id: { $nin: paidInvoiceIds }
     }).sort({ invoiceDate: -1 });
 
-    res.json({ payments, pendingInvoices });
+    // Check overdue (matched/approved but unpaid and >30 days old)
+    const overdueInvoices = payableInvoices.filter(inv => {
+      const daysSince = Math.floor((Date.now() - new Date(inv.invoiceDate)) / (1000 * 60 * 60 * 24));
+      return daysSince > 30;
+    });
+
+    res.json({ payments, payableInvoices, overdueInvoices });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/payments/seller — seller sees payments received
+router.get('/seller', auth, async (req, res) => {
+  try {
+    // Find invoices where this seller's GSTIN is the sellerGstin
+    const sellerInvoices = await Invoice.find({ sellerGstin: req.user.gstin, source: 'gstr2a' }).select('_id');
+    const sellerInvoiceIds = sellerInvoices.map(i => i._id);
+
+    // Also find purchase invoices referencing this seller
+    const purchaseInvs = await Invoice.find({ sellerGstin: req.user.gstin, source: 'purchase' }).select('_id');
+    const allIds = [...sellerInvoiceIds, ...purchaseInvs.map(i => i._id)];
+
+    const payments = await Payment.find({ invoiceId: { $in: allIds } })
+      .populate('invoiceId')
+      .populate('buyerId', 'name email gstin businessName')
+      .sort({ paidAt: -1 });
+
+    res.json({ payments });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/payments/:id — single payment detail
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id)
+      .populate('invoiceId')
+      .populate('buyerId', 'name email gstin businessName');
+    if (!payment) return res.status(404).json({ error: 'Payment not found' });
+    res.json({ payment });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -16,18 +16,12 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Handle 401 globally
+// Handle errors cleanly without bypassing React state
 api.interceptors.response.use(
   res => res,
   async (err) => {
-    if (err.response?.status === 401) {
-      // Firebase auth state change listener will handle the UI redirect
-      // if the user is truly signed out
-      if (auth.currentUser) {
-         await auth.signOut();
-      }
-      window.location.href = '/login';
-    }
+    // If a request fails via 401, we want the specific API call to catch and handle it natively.
+    // Force-redirects erase transient states (like during valid Firebase onboarding synchronization pipelines).
     return Promise.reject(err);
   }
 );

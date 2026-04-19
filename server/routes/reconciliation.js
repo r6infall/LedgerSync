@@ -4,14 +4,17 @@ const auth = require('../middleware/auth');
 const Invoice = require('../models/Invoice');
 const ReconciliationResult = require('../models/ReconciliationResult');
 const Notification = require('../models/Notification');
-const reconciliationService = require('../services/reconciliationService');
+const reconciliationEngine = require('../services/reconciliationEngine');
 
 // POST /api/reconciliation/run — trigger reconciliation for user
 router.post('/run', auth, async (req, res) => {
   try {
-    const results = await reconciliationService.runReconciliation(req.user._id);
+    console.log('[Reconciliation] User:', req.user.email, 'GSTIN:', req.user.gstin, 'ID:', req.user._id);
+    const results = await reconciliationEngine.runEngine(req.user.gstin, req.user._id);
+    console.log('[Reconciliation] Results:', JSON.stringify(results));
     res.json({ message: 'Reconciliation complete', summary: results, ...results });
   } catch (err) {
+    console.error('[Reconciliation Error]', err);
     res.status(500).json({ error: err.message });
   }
 });

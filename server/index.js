@@ -31,6 +31,7 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/compliance', require('./routes/compliance'));
 app.use('/api/ai', require('./routes/ai'));
+app.use('/api/missing-invoices', require('./routes/missingInvoices'));
 
 // Cron Jobs
 require('./cron/notifications');
@@ -55,3 +56,5 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
+// Triggering restart

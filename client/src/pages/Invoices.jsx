@@ -87,6 +87,16 @@ export default function Invoices() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (!window.confirm('Are you sure you want to delete ALL invoices? This action cannot be undone.')) return;
+    try {
+      await api.delete('/invoices/all');
+      fetchInvoices();
+    } catch (err) {
+      alert('Failed to delete all invoices');
+    }
+  };
+
   const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
   const showingStart = total === 0 ? 0 : (page - 1) * limit + 1;
@@ -94,9 +104,16 @@ export default function Invoices() {
 
   return (
     <div className="fade-in" style={{ padding: 24, background: '#FAFAF8', minHeight: 'calc(100vh - 60px)' }}>
-      <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1A1A1A', marginBottom: 4 }}>Invoice Ledger</h1>
-        <div style={{ fontSize: 12, color: '#999' }}>All invoices for this filing period</div>
+      <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1A1A1A', marginBottom: 4 }}>Invoice Ledger</h1>
+          <div style={{ fontSize: 12, color: '#999' }}>All invoices for this filing period</div>
+        </div>
+        {invoices.length > 0 && (
+          <Button variant="secondary" size="sm" onClick={handleDeleteAll} style={{ color: '#C0392B', borderColor: '#F5C6CB' }}>
+            Delete All
+          </Button>
+        )}
       </div>
 
       <div style={{

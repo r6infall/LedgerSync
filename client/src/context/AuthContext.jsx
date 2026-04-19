@@ -42,6 +42,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await api.get('/auth/me');
       setUser(res.data.user);
+      return res.data.user;
     } catch (err) {
       console.error(err);
       // If the backend doesn't have the user, we throw so they don't get stuck in a bad state
@@ -57,7 +58,8 @@ export function AuthProvider({ children }) {
     // Sync with backend (creates user if they don't exist)
     const res = await api.post('/auth/sync', {
       name: result.user.displayName,
-      email: result.user.email
+      email: result.user.email,
+      role: 'buyer' // Default role for Google sign-in unless requested otherwise in registration
     }, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -75,13 +77,14 @@ export function AuthProvider({ children }) {
       name: data.name,
       businessName: data.businessName,
       gstin: data.gstin,
-      email: data.email
+      email: data.email,
+      role: data.role
     }, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
     setUser(res.data.user);
-    return res.data;
+    return res.data.user;
   };
 
   const logout = async () => {
@@ -89,8 +92,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateUser = async (data) => {
+    const res = await api.put('/auth/profile', data);
+    setUser(res.data.user);
+    return res.data.user;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -196,6 +196,12 @@ export default function Navbar() {
             )}
           </div>
 
+          <button onClick={() => navigate('/profile')} style={{
+            background: 'none', border: 'none', fontSize: '10px', color: '#1A1A1A', cursor: 'pointer', padding: 0, fontWeight: 500
+          }}>
+            Profile
+          </button>
+
           <button onClick={handleLogout} style={{
             background: 'none', border: 'none', fontSize: '10px', color: '#BBBBBB', cursor: 'pointer', padding: 0
           }}>
